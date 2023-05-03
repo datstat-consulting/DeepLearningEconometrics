@@ -1,8 +1,8 @@
 class PerceptronMain:
-    def __init__(self, layer_sizes, activation_function, activation_derivative, optimizer_function, weight_decay= 0.0, add_bias = True):
+    def __init__(self, layer_sizes, activation_function, optimizer_function, weight_decay= 0.0, add_bias = True):
         self.layer_sizes = layer_sizes
-        self.activation_function = activation_function
-        self.activation_derivative = activation_derivative
+        self.activation_function = TorchActivations.activation(activation_function)
+        self.activation_derivative = TorchActivations.derivative(activation_function)
         self.optimizer_function = optimizer_function
         self.add_bias = add_bias
         self.weight_decay = weight_decay
@@ -10,7 +10,7 @@ class PerceptronMain:
         if self.add_bias:
             self.layer_sizes[0] += 1
 
-    def initialize_weights(self, dtype=torch.float32):
+    def initialize_weights(self, dtype=torch.float64):
         self.weights = [torch.randn(n, m, dtype=dtype) for n, m in zip(self.layer_sizes[:-1], self.layer_sizes[1:])]
 
     def forward(self, X):
@@ -82,36 +82,9 @@ class PerceptronMain:
         # Add a column of 1s to the input data
         X = torch.cat((X, torch.ones((X.shape[0], 1))), dim=1)
 
+        # Ensure that the input tensor X has the same data type as the weights
+        X = X.to(self.weights[0].dtype)
+
         for w in self.weights[:-1]:
             X = self.activation_function(X @ w)
         return X @ self.weights[-1]
-
-
-class TorchActivations:
-    activations = {
-        'sigmoid': lambda x: 1 / (1 + torch.exp(-x)),
-        'relu': lambda x: torch.max(torch.zeros_like(x), x),
-        'relu_squared': lambda x: torch.pow(torch.max(torch.zeros_like(x), x), 2),
-        'linear': lambda x: x
-    }
-    
-    derivatives = {
-        'sigmoid': lambda x: sigmoid(x) * (1 - sigmoid(x)),
-        'relu': lambda x: (x > 0).float(),
-        'relu_squared': lambda x: 2 * torch.max(torch.zeros_like(x), x),
-        'linear': lambda x: torch.ones_like(x)
-    }
-    
-    @staticmethod
-    def activation(activation_name):
-        return TorchActivations.activations.get(activation_name, None)
-    
-    @staticmethod
-    def derivative(activation_name):
-        return TorchActivations.derivatives.get(activation_name, None)
-
-        
-class Optimizers:
-    def sgd_optimizer(weights, gradients, learning_rate, weight_decay):
-        new_weights = [w - learning_rate * (g + weight_decay * w) for w, g in zip(weights, gradients)]
-        return new_weights
