@@ -25,7 +25,6 @@ The `PerceptronMain` class implements a general perceptron which handles GLMs.
 ```
 nn = PerceptronMain(layer_sizes=[1, 1], # replace output layer with number of classes if categorical regression model. 
                    activation_function="linear", 
-                   activation_derivative="linear", 
                    optimizer_function=Optimizers.sgd_optimizer,
                    weight_decay = 0.0,
                    add_bias = True # for intercept term in GLMs
