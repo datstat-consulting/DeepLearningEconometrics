@@ -100,5 +100,4 @@ shap_values_list, expected_value_list = shap_explainer.compute_shap_values(X, nu
 # Plot the aggregated SHAP values using either Plotly or Matplotlib
 shap_explainer.plot_aggregated_shap_values(shap_values_list, feature_names, expected_value_list, is_plotly=True)
 ```
-the `PerceptronShap` class will be configured to support more models later on.
-
+The `PerceptronShap` class will be configured to support more models later on.
