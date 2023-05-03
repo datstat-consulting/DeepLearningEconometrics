@@ -6,7 +6,7 @@ class PerceptronMain:
         self.optimizer_function = optimizer_function
         self.add_bias = add_bias
         self.weight_decay = weight_decay
-        self.optimizer_params = {}
+        #self.optimizer_params = {}
         self.initialize_weights()
         if self.add_bias:
             self.layer_sizes[0] += 1
@@ -37,12 +37,13 @@ class PerceptronMain:
         return gradients
 
     def optimize(self, gradients, learning_rate):
-        self.weights, updated_params = self.optimizer_function(self.weights, gradients, learning_rate, self.weight_decay, **self.optimizer_params)
-        self.optimizer_params.update(updated_params)
+        #self.weights, updated_params = self.optimizer_function(self.weights, gradients, learning_rate, self.weight_decay, **self.optimizer_params)
+        #self.optimizer_params.update(updated_params)
+        self.weights = self.optimizer_function(self.weights, gradients, learning_rate, self.weight_decay)
 
     def fit(self, X, y, epochs, batch_size, learning_rate, epoch_step=100, optimizer_parameters=None):
-        if optimizer_parameters is None:
-            optimizer_parameters = {}
+       # if optimizer_parameters is None:
+            #optimizer_parameters = {}
         step = epoch_step
         current_epochs = epochs
         if not isinstance(X, torch.Tensor):
@@ -68,14 +69,16 @@ class PerceptronMain:
                             self.forward(X_batch)
                             gradients = self.backward(X_batch, y_batch, learning_rate)
                             
+                            self.optimize(gradients, learning_rate)
+                            
                             # Update weights with the optimizer function and provided parameters
-                            self.weights, *optimizer_params_values = self.optimizer_function(
-                                self.weights, gradients, learning_rate, self.weight_decay, **optimizer_parameters
-                            )
+                            #self.weights, *optimizer_params_values = self.optimizer_function(
+                                #self.weights, gradients, learning_rate, self.weight_decay, **optimizer_parameters
+                            #)
                             
                             # Update optimizer_parameters with the new values returned by the optimizer function
-                            for key, value in zip(optimizer_parameters.keys(), optimizer_params_values):
-                                optimizer_parameters[key] = value
+                            #for key, value in zip(optimizer_parameters.keys(), optimizer_params_values):
+                                #optimizer_parameters[key] = value
 
                         if w:
                             raise RuntimeWarning("Overflow encountered during training.")
@@ -103,19 +106,22 @@ class PerceptronMain:
     
 class Optimizers:
     @staticmethod
-    def sgd_optimizer(weights, gradients, learning_rate, weight_decay, momentum=0.0, velocity=None, **kwargs):
-        if velocity is None:
-            velocity = [torch.zeros_like(w) for w in weights]
+    def sgd_optimizer(weights, gradients, learning_rate, weight_decay, momentum=None, velocity=None, eps=None):
+        new_weights = [w - learning_rate * (g + weight_decay * w) for w, g in zip(weights, gradients)]
+        return new_weights
 
-        new_velocity = [momentum * v + learning_rate * (g + weight_decay * w) for v, w, g in zip(velocity, weights, gradients)]
-        new_weights = [w - v for w, v in zip(weights, new_velocity)]
-        return new_weights, new_velocity
+    #def sgd_optimizer(weights, gradients, learning_rate, weight_decay, momentum=0.0, velocity=None, **kwargs):
+        #velocity = [torch.zeros_like(w) for w in weights]
+        #new_velocity = [momentum * v + learning_rate * (g + weight_decay * w) for v, w, g in zip(velocity, weights, gradients)]
+        #new_weights = [w - v for w, v in zip(weights, new_velocity)]
+        #return new_weights, new_velocity
 
     @staticmethod
     def adagrad_optimizer(weights, gradients, learning_rate, weight_decay, squared_gradients, eps=1e-8, **kwargs):
         new_squared_gradients = [sg + g ** 2 for sg, g in zip(squared_gradients, gradients)]
         new_weights = [w - learning_rate / (torch.sqrt(sg) + eps) * (g + weight_decay * w) for w, sg, g in zip(weights, new_squared_gradients, gradients)]
         return new_weights, new_squared_gradients
+
 
 class TorchActivations:
     activations = {
