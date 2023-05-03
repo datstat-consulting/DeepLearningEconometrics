@@ -20,18 +20,29 @@ A good rule of thumb for hidden layers:
 
 ## Generalized Linear Models
 
-The `PerceptronMain` class implements a general perceptron which handles GLMs.
+The `PerceptronMain` class implements a general perceptron which handles GLMs. Note the choices of optimizing algorithms:
+- Stochastic Gradient Descent (`sgd_optimizer`)
+- Adagrad (`adagrad_optimizer`)
+
+Also note the needed optimizer parameters:
+- Stochastic Gradient Descent: `{'momentum': 0.0, 'velocity': [torch.zeros_like(w).double() for w in nn.weights]}`
+- Adagrad: `{'squared_gradients': [torch.zeros_like(w).float() for w in nn.weights]}`
 
 ```
-nn = PerceptronMain(layer_sizes=[1, 1], # replace output layer with number of classes if categorical regression model. 
+nn = PerceptronMain(layer_sizes=[1, 1], 
                    activation_function="linear", 
-                   optimizer_function=Optimizers.sgd_optimizer,
+                   optimizer_function = Optimizers.sgd_optimizer,
                    weight_decay = 0.0,
-                   add_bias = True # for intercept term in GLMs
-                   )
+                   add_bias = True)
 
 # Train the single layer perceptron with independent variables X and deepndent variable y
-nn.fit(X, y, epochs=1000, batch_size=32, learning_rate=0.0001, epoch_step = 100)
+nn.fit(X1, y, 
+       epochs=1000, 
+       batch_size=32, 
+       learning_rate=0.0001, 
+       epoch_step=100, 
+       #optimizer_parameters={'squared_gradients': [torch.zeros_like(w).float() for w in nn.weights]},
+       optimizer_parameters={'momentum': 0.9, 'velocity': [torch.zeros_like(w).double() for w in nn.weights]}))
 
 # Make predictions using the trained single layer perceptron
 predictions = nn.predict(X)
