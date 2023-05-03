@@ -23,7 +23,7 @@ A good rule of thumb for hidden layers:
 The `DeepIv` class implements a two-stage artificial neural network estimation.
 
 ```
-model = DeepIV(first_stage_layer_sizes=[n_instruments, 10, n_features],
+model = DeepIv(first_stage_layer_sizes=[n_instruments, 10, n_features],
                second_stage_layer_sizes=[n_features, 10, n_classes],
                first_activation="relu",
                second_activation="relu",
@@ -39,7 +39,7 @@ model.fit(NewIndep, Z, NewEndog, epochs, batch_size, learning_rate, epoch_step =
 ## VANAR
 The `Vanar` class is suitable for both univariate and multivariate datasets. 
 ```
-vanar = VANAR(n_lags=5, hidden_layer_sizes=[10], n_components=3, autoencoder_activ="relu", forecaster_activ="relu", autoen_optim = Optimizers.sgd_optimizer, fore_optim = Optimizers.sgd_optimizer)
+vanar = Vanar(n_lags=5, hidden_layer_sizes=[10], n_components=3, autoencoder_activ="relu", forecaster_activ="relu", autoen_optim = Optimizers.sgd_optimizer, fore_optim = Optimizers.sgd_optimizer)
 
 vanar.fit(endog, epochs=1000, batch_size=32, learning_rate=0.001)
 y_pred_vanar = vanar.predict_next_period(data, horizon=5)
