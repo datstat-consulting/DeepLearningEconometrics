@@ -18,6 +18,26 @@ A good rule of thumb for hidden layers:
 
 # Examples
 
+## Generalized Linear Models
+
+The `PerceptronMain` class implements a general perceptron which handles GLMs.
+
+```
+nn = PerceptronMain(layer_sizes=[1, 1], # replace output layer with number of classes if categorical regression model. 
+                   activation_function="linear", 
+                   activation_derivative="linear", 
+                   optimizer_function=Optimizers.sgd_optimizer,
+                   weight_decay = 0.0,
+                   add_bias = True # for intercept term in GLMs
+                   )
+
+# Train the single layer perceptron with independent variables X and deepndent variable y
+nn.fit(X, y, epochs=1000, batch_size=32, learning_rate=0.0001, epoch_step = 100)
+
+# Make predictions using the trained single layer perceptron
+predictions = nn.predict(X)
+```
+
 ## Deep Instrumental Variables
 
 The `DeepIv` class implements a two-stage artificial neural network estimation.
@@ -33,7 +53,7 @@ model = DeepIv(first_stage_layer_sizes=[n_instruments, 10, n_features],
 epochs = 1000
 batch_size = 32
 learning_rate = 0.001
-model.fit(NewIndep, Z, NewEndog, epochs, batch_size, learning_rate, epoch_step = 100)
+model.fit(X, Z, y, epochs, batch_size, learning_rate, epoch_step = 100)
 ```
 
 ## VANAR
