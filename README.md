@@ -3,12 +3,12 @@ Standard econometric models use Maximum Likelihood Estimation or situational equ
 - Linear Regression models are no longer be fragile to heteroskedasticity or a non-zero error term, and is more robust to multicollinearity (but endogeneity remains a problem).
 - Logistic Regression models no 
 - Dynamic panel models no longer need more individuals than observations (unlike Arellano-Bond GMM estimator).
-- ARIMA is less fragile to stationarity (this implementation uses a single layer perceptron).
+- ARIMA is less fragile to non-stationarity (this implementation uses a single layer perceptron).
 
-Nonlinear models are also supported, as wel as those with multiple hidden layers. These have the benefit of further ignoring distributional properties.
-- Vector Autoencoding Nonlinear Autoregression (VANAR) is implemented.
-- Deep Instrumental Variables approach (Deep IV) is implemented.
-- more features to come.
+Nonlinear models are also supported, as wel as those with multiple hidden layers. These have the benefit of further ignoring distributional properties. For instance, time-series models may completely ignore non-stationarity. These specific models are implemented:
+- Vector Autoencoding Nonlinear Autoregression (VANAR)
+- Deep Instrumental Variables (Deep IV)
+- more to come.
 
 # Preliminaries
 
