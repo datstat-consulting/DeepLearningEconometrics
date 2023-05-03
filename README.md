@@ -53,6 +53,9 @@ epochs = 1000
 batch_size = 32
 learning_rate = 0.001
 model.fit(X, Z, y, epochs, batch_size, learning_rate, epoch_step = 100)
+
+# Fit on new independent variable
+model.predict(NewX)
 ```
 
 ## VANAR
@@ -65,3 +68,37 @@ y_pred_vanar = vanar.predict_next_period(data, horizon=5)
 print("VANAR predictions:", y_pred_vanar)
 ```
 To remove autoencoding, simply set `n_components` to be the same as `n_lags`, and set `autoencoder_activ="linear"`.
+
+# Shapley Value
+The Shapley Value of a model shows how each independent variable contributes to output prediction. This is a useful alternative to p-values for interpreting Machine Learning models.
+## Generalized Linear Model
+It may be computationally efficient to use only one observation to demonstrate how each independent variable contributes to prediction. In this case, we use the very first observation.
+```
+torch.manual_seed(375)
+# Create an instance of the PerceptronShap class
+shap_explainer = PerceptronShap(nn, num_samples=1000)
+
+# Select an instance from your dataset
+instance_index = 0
+instance = X[instance_index]
+
+# Compute the SHAP values and expected value for the selected instance
+num_features = X.shape[1]
+shap_values, expected_value = shap_explainer.compute_shap_values_single(instance, num_features)
+
+# Plot the SHAP values using either Plotly or Matplotlib
+feature_names = [f'Feature {i+1}' for i in range(num_features)]
+shap_explainer.plot_shap_values(shap_values, feature_names, expected_value, is_plotly=True)
+```
+When feasible, especially for mere GLMs, we can use a random sample, or even the entire dataset.
+```
+num_instances = 10
+random_indices = torch.randint(0, len(X), (num_instances,))
+random_sample = X[random_indices]
+shap_values_list, expected_value_list = shap_explainer.compute_shap_values(X, num_features) # entire data set.
+
+# Plot the aggregated SHAP values using either Plotly or Matplotlib
+shap_explainer.plot_aggregated_shap_values(shap_values_list, feature_names, expected_value_list, is_plotly=True)
+```
+the `PerceptronShap` class will be configured to support more models later on.
+
