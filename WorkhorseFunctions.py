@@ -9,6 +9,14 @@ class WorkhorseFunctions:
         Xty = X.t().mm(y)
         beta_hat = torch.linalg.solve(XtX, Xty)
         return beta_hat
+    
+    # VAR helper function
+    def create_input_output_pairs(data, n_lags):
+        X, y = [], []
+        for i in range(n_lags, len(data)):
+            X.append(data[i - n_lags:i])
+            y.append(data[i])
+        return torch.tensor(X), torch.tensor(y)
 
 class TimeSeriesWorkhorse:
     # Initialize AR and MA parameters using OLS estimation
