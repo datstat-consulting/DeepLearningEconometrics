@@ -20,14 +20,7 @@ A good rule of thumb for hidden layers:
 
 ## Generalized Linear Models
 
-The `PerceptronMain` class implements a general perceptron which handles GLMs. Note the choices of optimizing algorithms:
-- Stochastic Gradient Descent (`sgd_optimizer`)
-- Adagrad (`adagrad_optimizer`)
-
-Also note the needed optimizer parameters (with example values):
-- Stochastic Gradient Descent: `{'momentum': 0.9, 'velocity': [torch.zeros_like(w).double() for w in nn.weights]}`
-- Adagrad: `{'squared_gradients': [torch.zeros_like(w).float() for w in nn.weights]}`
-
+The `PerceptronMain` class implements a general perceptron which handles GLMs. 
 ```
 nn = PerceptronMain(layer_sizes=[1, 1], 
                    activation_function="linear", 
@@ -40,8 +33,7 @@ nn.fit(X1, y,
        epochs=1000, 
        batch_size=32, 
        learning_rate=0.0001, 
-       epoch_step=100, 
-       optimizer_parameters={'momentum': 0.0, 'velocity': [torch.zeros_like(w).double() for w in nn.weights]}))
+       epoch_step=100)
 
 # Make predictions using the trained single layer perceptron
 predictions = nn.predict(X)
