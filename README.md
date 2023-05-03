@@ -71,10 +71,8 @@ print("VANAR predictions:", y_pred_vanar)
 ```
 To remove autoencoding, simply set `n_components` to be the same as `n_lags`, and set `autoencoder_activ="linear"`.
 
-# Shapley Value
-The Shapley Value of a model shows how each independent variable contributes to output prediction. This is a useful alternative to p-values for interpreting Machine Learning models.
-## Generalized Linear Model
-It may be computationally efficient to use only one observation to demonstrate how each independent variable contributes to prediction. In this case, we use the very first observation.
+## Shapley Value
+The Shapley Value of a model shows how each independent variable contributes to output prediction. This is a useful alternative to p-values for interpreting Machine Learning models. It may be computationally efficient to use only one observation to demonstrate how each independent variable contributes to prediction. In this case, we use the very first observation.
 ```
 torch.manual_seed(375)
 # Create an instance of the PerceptronShap class
