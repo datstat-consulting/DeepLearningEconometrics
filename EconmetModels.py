@@ -94,6 +94,10 @@ class Vanar:
             activation_function=forecaster_activ,
             optimizer_function=fore_optim,
         )
+        
+    def initialize_forecaster_weights(self, X, y):
+        beta_hat = WorkhorseFunctions.ols_estimator_torch(X, y)
+        self.forecaster.weights[0].data = beta_hat.t()
 
     def fit(self, data, epochs, batch_size, learning_rate, validation_split=0.2, epoch_step = 100):
         X, y = WorkhorseFunctions.create_input_output_pairs(data, self.n_lags)
@@ -107,6 +111,9 @@ class Vanar:
         # Encode the input data
         X_train_encoded = self.autoencoder.predict(X_train)[:, :self.n_lags]
         X_val_encoded = self.autoencoder.predict(X_val)[:, :self.n_lags]
+        
+        # Initialize VANAR weights with OLS
+        self.initialize_forecaster_weights(X_train_encoded, y_train)
 
         # Train the forecaster
         self.forecaster.fit(X_train_encoded, y_train, epochs=epochs, batch_size=batch_size, learning_rate=learning_rate, epoch_step=epoch_step)
