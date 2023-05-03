@@ -1,13 +1,20 @@
 # EconmetPerceptron
-Standard econometric models use Maximum Likelihood Estimation or situational equivalents (ie OLS) for calculations. `EconmetPerceptron` uses its own implementation of a Perceptron for estimates robust to distribution properties. Notably,
+Standard econometric models use Maximum Likelihood Estimation or situational equivalents (ie OLS) for calculations. `EconmetPerceptron` uses its own implementation of a Perceptron for estimates robust to distributional properties. Notably,
 - Linear Regression models are no longer be fragile to heteroskedasticity or a non-zero error term, and is more robust to multicollinearity (but endogeneity remains a problem).
 - Logistic Regression models no 
 - Dynamic panel models no longer need more individuals than observations (unlike Arellano-Bond GMM estimator).
+- ARIMA is less fragile to stationarity (this implementation uses a single layer perceptron).
 
-Nonlinear models are also supported. These have the benefit of further ignoring distributional properties.
+Nonlinear models are also supported, as wel as those with multiple hidden layers. These have the benefit of further ignoring distributional properties.
 - Vector Autoencoding Nonlinear Autoregression (VANAR) is implemented.
 - Deep Instrumental Variables approach (Deep IV) is implemented.
 - more features to come.
+
+# Preliminaries
+
+A good rule of thumb for hidden layers:
+- The number of hidden nodes in each layer should be somewhere between the size of the input and output layer, potentially the mean.
+- The number of hidden nodes need exceed twice the number of input nodes, as you are already overfitting at this point.
 
 # Examples
 
