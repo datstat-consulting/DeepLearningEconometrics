@@ -19,6 +19,7 @@ class WorkhorseFunctions:
         return torch.tensor(X), torch.tensor(y)
 
 class TimeSeriesWorkhorse:
+
     # Initialize AR and MA parameters using OLS estimation
     def initialize_params_torch(y, p, q):
         # AR part
@@ -36,7 +37,7 @@ class TimeSeriesWorkhorse:
         for t in range(q, len(residuals)):
             for j in range(q):
                 X_ma[t - q, j] = residuals[t - j - 1]
-        ma_coeffs = WorkhorseFunctionsols_estimator_torch(X_ma, residuals[q:])
+        ma_coeffs = WorkhorseFunctions.ols_estimator_torch(X_ma, residuals[q:])
 
         return ar_coeffs.view(-1), ma_coeffs.view(-1)
 
@@ -73,12 +74,12 @@ class TimeSeriesWorkhorse:
         if d > 0:
             y = torch.diff(y, n=d)
         # Initialize the AR, MA, and intercept parameters using OLS
-        ar_coeffs, ma_coeffs = initialize_params_torch(y, p, q)
+        ar_coeffs, ma_coeffs = TimeSeriesWorkhorse.initialize_params_torch(y, p, q)
         params = torch.cat((ar_coeffs, ma_coeffs, torch.zeros(1, dtype=torch.float64)), dim=0)
 
         # Optimize the negative log-likelihood using custom SGD
         for i in range(n_iterations):
-            neg_loglik, neg_grads = negative_log_likelihood_torch(params, y, p, d, q)
+            neg_loglik, neg_grads = TimeSeriesWorkhorse.negative_log_likelihood_torch(params, y, p, d, q)
             params -= learning_rate * neg_grads
 
         ar_coeffs = params[:p]
