@@ -24,8 +24,8 @@ The `PerceptronMain` class implements a general perceptron which handles GLMs. N
 - Stochastic Gradient Descent (`sgd_optimizer`)
 - Adagrad (`adagrad_optimizer`)
 
-Also note the needed optimizer parameters:
-- Stochastic Gradient Descent: `{'momentum': 0.0, 'velocity': [torch.zeros_like(w).double() for w in nn.weights]}`
+Also note the needed optimizer parameters (with example values):
+- Stochastic Gradient Descent: `{'momentum': 0.9, 'velocity': [torch.zeros_like(w).double() for w in nn.weights]}`
 - Adagrad: `{'squared_gradients': [torch.zeros_like(w).float() for w in nn.weights]}`
 
 ```
@@ -41,8 +41,7 @@ nn.fit(X1, y,
        batch_size=32, 
        learning_rate=0.0001, 
        epoch_step=100, 
-       #optimizer_parameters={'squared_gradients': [torch.zeros_like(w).float() for w in nn.weights]},
-       optimizer_parameters={'momentum': 0.9, 'velocity': [torch.zeros_like(w).double() for w in nn.weights]}))
+       optimizer_parameters={'momentum': 0.0, 'velocity': [torch.zeros_like(w).double() for w in nn.weights]}))
 
 # Make predictions using the trained single layer perceptron
 predictions = nn.predict(X)
