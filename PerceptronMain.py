@@ -111,7 +111,7 @@ class TorchActivations:
         return TorchActivations.derivatives.get(activation_name, None)
 
         
-class TorchOptimizers:
+class Optimizers:
     def sgd_optimizer(weights, gradients, learning_rate, weight_decay):
         new_weights = [w - learning_rate * (g + weight_decay * w) for w, g in zip(weights, gradients)]
         return new_weights
