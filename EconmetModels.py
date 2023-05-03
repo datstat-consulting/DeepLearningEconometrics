@@ -8,8 +8,7 @@ class ArimaSlp(PerceptronMain):
         self.q = q
         super().__init__(
             layer_sizes=[p + q, 1],
-            activation_function=TorchActivations.activation("linear"),
-            activation_derivative=TorchActivations.derivative("linear"),
+            activation_function="linear",
             optimizer_function=Optimizers.sgd_optimizer,
             weight_decay=0.0,
             add_bias=True
@@ -61,8 +60,8 @@ class ArimaSlp(PerceptronMain):
 # Deep Instrumental Variable 
 class DeepIv:
     def __init__(self, first_stage_layer_sizes, second_stage_layer_sizes, first_activation, second_activation, optimizer_function, add_bias = True):
-        self.first_stage_network = PerceptronMain(layer_sizes=first_stage_layer_sizes, activation_function=TorchActivations.activation(first_activation), activation_derivative=TorchActivations.derivative(first_activation), optimizer_function=optimizer_function, add_bias = add_bias)
-        self.second_stage_network = PerceptronMain(layer_sizes=second_stage_layer_sizes, activation_function=TorchActivations.activation(second_activation), activation_derivative=TorchActivations.derivative(second_activation), optimizer_function=optimizer_function, add_bias = add_bias)
+        self.first_stage_network = PerceptronMain(layer_sizes=first_stage_layer_sizes, activation_function=first_activation, optimizer_function=optimizer_function, add_bias = add_bias)
+        self.second_stage_network = PerceptronMain(layer_sizes=second_stage_layer_sizes, activation_function=second_activation, optimizer_function=optimizer_function, add_bias = add_bias)
 
     def fit(self, X, Z, y, epochs, batch_size, learning_rate, epoch_step = 100):
         # Fit the first-stage network using Z as input and X as output
@@ -87,14 +86,12 @@ class Vanar:
         self.n_lags = n_lags
         self.autoencoder = PerceptronMain(
             layer_sizes=[n_lags, n_components, n_lags],
-            activation_function=TorchActivations.activation(autoencoder_activ),
-            activation_derivative=TorchActivations.derivative(autoencoder_activ),
+            activation_function=autoencoder_activ,
             optimizer_function=autoen_optim,
         )
         self.forecaster = PerceptronMain(
             layer_sizes=[n_lags] + hidden_layer_sizes + [1],
-            activation_function=TorchActivations.activation(forecaster_activ),
-            activation_derivative=TorchActivations.derivative(forecaster_activ),
+            activation_function=forecaster_activ,
             optimizer_function=fore_optim,
         )
 
