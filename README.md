@@ -101,3 +101,8 @@ shap_values_list, expected_value_list = shap_explainer.compute_shap_values(X, nu
 shap_explainer.plot_aggregated_shap_values(shap_values_list, feature_names, expected_value_list, is_plotly=True)
 ```
 The `PerceptronShap` class will be configured to support more models later on.
+
+# References
+- Cabanilla, K. I., & Go, K. T. (2019). Forecasting, Causality, and Impulse Response with Neural Vector Autoregressions. arXiv preprint arXiv:1903.09395.
+- Hartford, J., Lewis, G., Leyton-Brown, K., & Taddy, M. (2017, July). Deep IV: A flexible approach for counterfactual prediction. In International Conference on Machine Learning (pp. 1414-1423). PMLR.
+- Lundberg, S. M., & Lee, S. I. (2017). A unified approach to interpreting model predictions. Advances in neural information processing systems, 30.
