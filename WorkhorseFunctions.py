@@ -27,7 +27,7 @@ class TimeSeriesWorkhorse:
         for t in range(p, len(y)):
             for i in range(p):
                 X_ar[t - p, i] = y[t - i - 1]
-        ar_coeffs = WorkhorseFunctions.ols_estimator_torch(X_ar, y[p:])
+        ar_coeffs = WorkhorseFunctions.ols_estimator_torch(X_ar, y[p:].view(-1, 1))
 
         # Compute the residuals
         residuals = y[p:] - X_ar.mm(ar_coeffs).view(-1)
@@ -37,7 +37,7 @@ class TimeSeriesWorkhorse:
         for t in range(q, len(residuals)):
             for j in range(q):
                 X_ma[t - q, j] = residuals[t - j - 1]
-        ma_coeffs = WorkhorseFunctions.ols_estimator_torch(X_ma, residuals[q:])
+        ma_coeffs = WorkhorseFunctions.ols_estimator_torch(X_ma, residuals[q:].view(-1, 1))
 
         return ar_coeffs.view(-1), ma_coeffs.view(-1)
 
@@ -82,7 +82,7 @@ class TimeSeriesWorkhorse:
             neg_loglik, neg_grads = TimeSeriesWorkhorse.negative_log_likelihood_torch(params, y, p, d, q)
             params -= learning_rate * neg_grads
 
-        ar_coeffs = params[:p]
+        ar_coeffs = params[:p].flip(0)
         ma_coeffs = params[p:p + q]
         intercept = params[-1]
         return ar_coeffs, ma_coeffs, intercept
