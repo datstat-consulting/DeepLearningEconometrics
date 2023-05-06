@@ -82,7 +82,8 @@ class DeepIv:
 
 # Vector Autoencoding Nonlinear Autoregression
 class Vanar:
-    def __init__(self, n_lags, hidden_layer_sizes, n_components, autoencoder_activ = "linear", forecaster_activ = "linear", autoen_optim = Optimizers.sgd_optimizer, fore_optim = Optimizers.sgd_optimizer):
+    def __init__(self, n_lags, hidden_layer_sizes, n_components, autoencoder_activ="linear", forecaster_activ="linear",
+                 autoen_optim=Optimizers.sgd_optimizer, fore_optim=Optimizers.sgd_optimizer):
         self.n_lags = n_lags
         self.autoencoder = PerceptronMain(
             layer_sizes=[n_lags, n_components, n_lags],
@@ -94,29 +95,31 @@ class Vanar:
             activation_function=forecaster_activ,
             optimizer_function=fore_optim,
         )
-        
+
     def initialize_forecaster_weights(self, X, y):
         beta_hat = WorkhorseFunctions.ols_estimator_torch(X, y)
         self.forecaster.weights[0].data = beta_hat.t()
 
-    def fit(self, data, epochs, batch_size, learning_rate, validation_split=0.2, epoch_step = 100):
+    def fit(self, data, epochs, batch_size, learning_rate, validation_split=0.2, epoch_step=100):
         X, y = WorkhorseFunctions.create_input_output_pairs(data, self.n_lags)
         n_validation = int(validation_split * X.shape[0])
         X_train, y_train = X[:-n_validation], y[:-n_validation]
         X_val, y_val = X[-n_validation:], y[-n_validation:]
 
         # Train the autoencoder
-        self.autoencoder.fit(X_train, X_train, epochs=epochs, batch_size=batch_size, learning_rate=learning_rate, epoch_step=epoch_step)
+        self.autoencoder.fit(X_train, X_train, epochs=epochs, batch_size=batch_size, learning_rate=learning_rate,
+                             epoch_step=epoch_step)
 
         # Encode the input data
         X_train_encoded = self.autoencoder.predict(X_train)[:, :self.n_lags]
         X_val_encoded = self.autoencoder.predict(X_val)[:, :self.n_lags]
-        
-        # Initialize VANAR weights with OLS
-        self.initialize_forecaster_weights(X_train_encoded, y_train)
+
+        # Initialize VANAR weights
+        self.initialize_forecaster_weights(X_train_encoded, y_train.view(-1, 1))
 
         # Train the forecaster
-        self.forecaster.fit(X_train_encoded, y_train, epochs=epochs, batch_size=batch_size, learning_rate=learning_rate, epoch_step=epoch_step)
+        self.forecaster.fit(X_train_encoded, y_train, epochs=epochs, batch_size=batch_size, learning_rate=learning_rate,
+                            epoch_step=epoch_step)
 
         # Validate the model
         y_val_pred = self.forecaster.predict(X_val_encoded)
@@ -134,4 +137,3 @@ class Vanar:
             data = torch.cat((data, torch.tensor([y_next])), dim=0)
 
         return torch.tensor(predictions)
-
