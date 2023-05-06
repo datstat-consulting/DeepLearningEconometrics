@@ -91,15 +91,9 @@ class PerceptronMain:
                 current_epochs -= step
 
     def predict(self, X):
-        if not isinstance(X, torch.Tensor):
-            X = torch.tensor(X)
-
-        # Add a column of 1s to the input data
-        X = torch.cat((X, torch.ones((X.shape[0], 1))), dim=1)
-
-        # Ensure that the input tensor X has the same data type as the weights
         X = X.to(self.weights[0].dtype)
-
+        if self.add_bias:
+            X = torch.cat((X, torch.ones((X.shape[0], 1), dtype=X.dtype)), dim=1)
         for w in self.weights[:-1]:
             X = self.activation_function(X @ w)
         return X @ self.weights[-1]
