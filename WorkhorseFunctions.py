@@ -2,21 +2,21 @@ import torch
 
 class WorkhorseFunctions:
 
-    # OLS estimator
+    @staticmethod
     def ols_estimator_torch(X, y):
-        y = y.view(-1, 1)  # Reshape y to have an extra dimension
+        y = y.view(-1, y.shape[-1])  # Reshape y to have the right dimensions
         XtX = X.t().mm(X)
         Xty = X.t().mm(y)
         beta_hat = torch.linalg.solve(XtX, Xty)
         return beta_hat
-    
-    # VAR helper function
+
+    @staticmethod
     def create_input_output_pairs(data, n_lags):
         X, y = [], []
         for i in range(n_lags, len(data)):
-            X.append(data[i - n_lags:i])
+            X.append(data[i - n_lags:i].flatten())
             y.append(data[i])
-        return torch.tensor(X), torch.tensor(y)
+        return torch.stack(X), torch.stack(y)
 
 class TimeSeriesWorkhorse:
 
