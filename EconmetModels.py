@@ -2,19 +2,19 @@ import torch
 
 # Single Layer Perceptron ARIMA
 class ArimaSlp(PerceptronMain):
-    def __init__(self, p, d, q):
+    def __init__(self, p, d, q, optimizer_function = Optimizers.sgd_optimizer, weight_decay = 0.0, add_bias = True):
         self.p = p
         self.d = d
         self.q = q
         super().__init__(
             layer_sizes=[p + q, 1],
             activation_function="linear",
-            optimizer_function=Optimizers.sgd_optimizer,
-            weight_decay=0.0,
-            add_bias=True
+            optimizer_function=optimizer_function,
+            weight_decay=weight_decay,
+            add_bias=add_bias
         )
 
-    def fit(self, y, epochs, batch_size, learning_rate, epoch_step = 100):
+    def fit(self, y, epochs, batch_size, learning_rate, epoch_step=100):
         if not isinstance(y, torch.Tensor):
             y = torch.tensor(y, dtype=torch.float64)
 
@@ -24,15 +24,21 @@ class ArimaSlp(PerceptronMain):
         for t in range(self.p, len(y_d)):
             X_ar[t - self.p] = y_d[t - self.p:t]
 
-        ar_coeffs = WorkhorseFunctions.ols_estimator_torch(X_ar, y_d[self.p:]).view(-1, 1)
+        ar_coeffs = WorkhorseFunctions.ols_estimator_torch(X_ar, y_d[self.p:].view(-1, 1)).view(-1, 1)
+
         residuals = y_d[self.p:] - X_ar.mm(ar_coeffs).view(-1)
 
         X_ma = torch.zeros((len(residuals) - self.q + 1, self.q), dtype=torch.float64)
         for t in range(self.q - 1, len(residuals)):
             X_ma[t - self.q + 1] = residuals[t - self.q + 1:t + 1]
 
-        ma_coeffs = WorkhorseFunctions.ols_estimator_torch(X_ma, residuals[self.q - 1:]).squeeze()
+        ma_coeffs = WorkhorseFunctions.ols_estimator_torch(X_ma, residuals[self.q - 1:].view(-1, 1)).view(-1, 1)  # Added .view(-1, 1)
+
         X = torch.cat((X_ar[:len(X_ma)], X_ma), dim=1)
+
+        # Initialize AR and MA weights
+        initial_weights = torch.cat((ar_coeffs, ma_coeffs), dim=0).t()
+        self.weights[0] = initial_weights
 
         super().fit(X, y_d[self.p + self.q - 1:], epochs, batch_size, learning_rate, epoch_step)
 
@@ -82,18 +88,22 @@ class DeepIv:
 
 # Vector Autoencoding Nonlinear Autoregression
 class Vanar:
-    def __init__(self, n_lags, hidden_layer_sizes, n_components, autoencoder_activ="linear", forecaster_activ="linear",
+    def __init__(self, n_lags, hidden_layer_sizes, n_components, autoencoder_wd = 0.0, forecast_wd = 0.0, add_bias = True, autoencoder_activ="linear", forecaster_activ="linear",
                  autoen_optim=Optimizers.sgd_optimizer, fore_optim=Optimizers.sgd_optimizer):
         self.n_lags = n_lags
         self.autoencoder = PerceptronMain(
             layer_sizes=[n_lags, n_components, n_lags],
             activation_function=autoencoder_activ,
             optimizer_function=autoen_optim,
+            weight_decay=autoencoder_wd,
+            add_bias = add_bias
         )
         self.forecaster = PerceptronMain(
             layer_sizes=[n_lags] + hidden_layer_sizes + [1],
             activation_function=forecaster_activ,
             optimizer_function=fore_optim,
+            weight_decay=forecast_wd,
+            add_bias = add_bias
         )
 
     def initialize_forecaster_weights(self, X, y):
