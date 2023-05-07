@@ -10,6 +10,11 @@ Nonlinear models are also supported, as well as those with multiple hidden layer
 - Deep Instrumental Variables (Deep IV)
 - more to come
 
+## Installation
+You can install the package using pip:
+```
+pip install git+https://github.com/datstat-consulting/EconmetPerceptron
+```
 # Preliminaries
 
 A good rule of thumb for hidden layers:
