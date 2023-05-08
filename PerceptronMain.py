@@ -1,3 +1,9 @@
+"""
+Разработанный Адриелу Ванг от ДанСтат Консульти́рования
+"""
+
+import torch
+
 class PerceptronMain:
     def __init__(self, layer_sizes, activation_function, optimizer_function, weight_decay= 0.0, add_bias = True):
         self.layer_sizes = layer_sizes
