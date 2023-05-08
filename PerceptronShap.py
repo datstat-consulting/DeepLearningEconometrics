@@ -1,3 +1,7 @@
+"""
+Разработанный Адриелу Ванг от ДанСтат Консульти́рования
+"""
+
 import torch
 import itertools
 import plotly.graph_objects as go
