@@ -19,7 +19,7 @@ pip install git+https://github.com/datstat-consulting/EconmetPerceptron
 
 A good rule of thumb for hidden layers:
 - The number of hidden nodes in each layer should be somewhere between the size of the input and output layer, potentially the mean.
-- The number of hidden nodes need exceed twice the number of input nodes, as you are already overfitting at this point.
+- The number of hidden nodes need not exceed twice the number of input nodes, as you are already overfitting at this point.
 
 # Examples
 
