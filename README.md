@@ -125,6 +125,7 @@ shap_explainer.plot_aggregated_shap_values(shap_values_list, feature_names, expe
 The `PerceptronShap` class will be configured to support more models later on.
 
 # References
+- Bennett, A., Kallus, N., & Schnabel, T. (2019). Deep generalized method of moments for instrumental variable analysis. Advances in neural information processing systems, 32.
 - Cabanilla, K. I., & Go, K. T. (2019). Forecasting, Causality, and Impulse Response with Neural Vector Autoregressions. arXiv preprint arXiv:1903.09395.
 - Hartford, J., Lewis, G., Leyton-Brown, K., & Taddy, M. (2017, July). Deep IV: A flexible approach for counterfactual prediction. In International Conference on Machine Learning (pp. 1414-1423). PMLR.
 - Lundberg, S. M., & Lee, S. I. (2017). A unified approach to interpreting model predictions. Advances in neural information processing systems, 30.
