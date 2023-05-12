@@ -158,11 +158,10 @@ class DeepGmm:
         self.second_stage_network = PerceptronMain(layer_sizes=second_stage_layer_sizes, activation_function=second_activation, optimizer_function=optimizer_function, add_bias=add_bias)
 
     def gmm_loss(self, y_pred, y_true, weights):
-        # Calculate the moment conditions
         moment_conditions = y_true - y_pred
 
         # Compute the GMM loss
-        gmm_loss = moment_conditions.T @ weights @ moment_conditions
+        gmm_loss = (moment_conditions.T * weights) @ moment_conditions
 
         return gmm_loss
 
