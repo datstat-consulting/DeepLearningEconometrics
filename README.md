@@ -12,6 +12,8 @@ Nonlinear models are also supported, as well as those with multiple hidden layer
 - Causal Inference, and
 - more to come.
 
+Finally, model interpretation is given by the Shapley Value. For now, the Shapley Value supports only the `PerceptronMain` class off the bat. Other interpretation methods, like local surrogate models, may follow.
+
 ## Installation
 You can install the package using pip:
 ```
