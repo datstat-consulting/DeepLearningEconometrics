@@ -65,6 +65,23 @@ model.fit(X, Z, y, epochs, batch_size, learning_rate, epoch_step = 100)
 model.predict(NewX)
 ```
 
+## Deep GMM
+
+The `DeepGmm` class implements a two-stage artificial neural network estimation. Unlike the `DeepIv` class, the `DeepGmm` class uses a GMM loss function for the second estimation stage.
+```
+model = DeepGmm(first_stage_layer_sizes=[n_instruments, 10, n_features],
+               second_stage_layer_sizes=[n_features, 10, 1],
+               first_activation="relu",
+               second_activation="relu",
+               optimizer_function=Optimizers.sgd_optimizer)
+
+# Train the DeepIV model
+epochs = 1000
+batch_size = 32
+learning_rate = 0.001
+model.fit(NewIndep, Z, NewEndog, epochs, batch_size, learning_rate, epoch_step = 100)
+```
+
 ## VANAR
 The `Vanar` class is suitable for both univariate and multivariate datasets. 
 ```
