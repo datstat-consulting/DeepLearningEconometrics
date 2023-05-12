@@ -8,6 +8,7 @@ Standard econometric models use Maximum Likelihood Estimation or situational equ
 Nonlinear models are also supported, as well as those with multiple hidden layers. These have the benefit of further ignoring distributional properties. For instance, time-series models may completely ignore non-stationarity. These specific models are implemented:
 - Vector Autoencoding Nonlinear Autoregression (VANAR)
 - Deep Instrumental Variables (Deep IV)
+- Deep Generalized Method of Moments (Deep GMM)
 - more to come
 
 ## Installation
