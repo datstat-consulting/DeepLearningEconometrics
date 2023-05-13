@@ -25,7 +25,7 @@ class CausalInference:
         self.outcome = outcome
         self.graph = graph
 
-    def estimate_effect(self, method_name="mdm", activation_function = "linear", optimizer_function = Optimizers.sgd_optimizer, weight_decay = 0.0):
+    def estimate_effect(self, method_name="mdm", hidden_layer_sizes = [10], activation_function = "linear", optimizer_function = Optimizers.sgd_optimizer, weight_decay = 0.0):
         if not hasattr(self, "estimand"):
             self.identify_effect()
     
@@ -35,7 +35,7 @@ class CausalInference:
 
         if method_name == "mdm":
             mdm = MahalanobisMatcher(perceptron=True)
-            mdm.fit(X, y, treatment, activation_function = activation_function, optimizer_function = optimizer_function, weight_decay = weight_decay)
+            mdm.fit(X, y, treatment, hidden_layer_sizes = hidden_layer_sizes, activation_function = activation_function, optimizer_function = optimizer_function, weight_decay = weight_decay)
             self.estimate = mdm.predict(X, treatment)
         else:
             raise ValueError(f"Unsupported estimation method: {method_name}")
@@ -169,13 +169,13 @@ class MahalanobisMatcher:
         self.n_neighbors = n_neighbors
         self.perceptron = perceptron
 
-    def fit(self, X, y, treatment, activation_function, optimizer_function, weight_decay):
+    def fit(self, X, y, treatment, hidden_layer_sizes, activation_function, optimizer_function, weight_decay):
         self.X = X
         self.y = y
         self.treatment = treatment
 
         if self.perceptron:
-            self.model = PerceptronMain([X.shape[1], 1], activation_function = activation_function, optimizer_function = optimizer_function, weight_decay = weight_decay)
+            self.model = PerceptronMain([X.shape[1]] + hidden_layer_sizes + [1], activation_function = activation_function, optimizer_function = optimizer_function, weight_decay = weight_decay)
             self.model.fit(X, y, epochs=1000, 
             batch_size=32, 
             learning_rate=0.0001, 
