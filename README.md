@@ -98,7 +98,7 @@ print("VANAR predictions:", y_pred_vanar)
 To remove autoencoding, simply set `n_components` to be the same as `n_lags`, and set `autoencoder_activ="linear"`.
 
 ## Causal Inference
-The `CausalInference` class estimates the causal effect of a treatment on outcomes. Instead of Propensity Score Matching, it uses Mahalanobis Distance Matching to circumvent problems with the former.
+The `CausalInference` class estimates the causal effect of a treatment on outcomes. Instead of Propensity Score Matching, it uses Mahalanobis Distance Matching (MDM) to circumvent problems with the former. Note that in practical uses, the data may need to be scaled to work with MDM better.
 
 For this example, we generate a dataset as a `pandas` DataFrame.
 ```
