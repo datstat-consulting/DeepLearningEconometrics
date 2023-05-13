@@ -69,7 +69,7 @@ model.fit(X, Z, y, epochs, batch_size, learning_rate, epoch_step = 100)
 model.predict(NewX)
 ```
 
-## Deep GMM
+## Deep Generalized Method of Moments
 
 The `DeepGmm` class implements a two-stage artificial neural network estimation. Unlike the `DeepIv` class, the `DeepGmm` class uses a GMM loss function for the second estimation stage.
 ```
@@ -129,7 +129,7 @@ The causal inference is estimated using a perceptron.
 ```
 ci = CausalInference(data=data, treatment='treatment', outcome='outcome', graph=graph)
 ci.identify_effect()
-ate_estimate = ci.estimate_effect(method_name='mdm', activation_function = "relu", optimizer_function = Optimizers.sgd_optimizer, weight_decay = 0.0)
+ate_estimate = ci.estimate_effect(method_name='mdm', hidden_layer_sizes = [], activation_function = "relu", optimizer_function = Optimizers.sgd_optimizer, weight_decay = 0.0)
 ```
 Print and plot results, including refutation for robustness checking.
 ```
