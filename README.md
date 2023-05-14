@@ -89,13 +89,20 @@ model.fit(NewIndep, Z, NewEndog, epochs, batch_size, learning_rate, epoch_step =
 ## VANAR
 The `Vanar` class is suitable for both univariate and multivariate datasets. 
 ```
-vanar = Vanar(n_lags=5, hidden_layer_sizes=[10], n_components=3, autoencoder_activ="relu", forecaster_activ="relu", autoen_optim = Optimizers.sgd_optimizer, fore_optim = Optimizers.sgd_optimizer)
+vanar = Vanar(n_lags=5, n_variables = 1, hidden_layer_sizes=[10], n_components=3, autoencoder_activ="relu", forecaster_activ="relu", autoen_optim = Optimizers.sgd_optimizer, fore_optim = Optimizers.sgd_optimizer)
 
 vanar.fit(endog, epochs=1000, batch_size=32, learning_rate=0.001)
 y_pred_vanar = vanar.predict_next_period(data, horizon=5)
 print("VANAR predictions:", y_pred_vanar)
 ```
 To remove autoencoding, simply set `n_components` to be the same as `n_lags`, and set `autoencoder_activ="linear"`.
+
+Estimate Granger Causality.
+```
+gc_indices = vanar.nonlinear_granger_causality(epochs=10000, batch_size=64, learning_rate=0.00001, activation_function="linear")
+print("Nonlinear Granger Causality Indices:", gc_indices)
+print("Granger Causality p-values:", vanar.granger_causality_p_values(gc_indices))
+```
 
 ## Causal Inference
 The `CausalInference` class estimates the causal effect of a treatment on outcomes. Instead of Propensity Score Matching, it uses Mahalanobis Distance Matching (MDM) to circumvent problems with the former. Note that in practical uses, the data may need to be scaled to work with MDM better.
