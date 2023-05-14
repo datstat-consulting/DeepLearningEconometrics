@@ -91,7 +91,7 @@ The `Vanar` class is suitable for both univariate and multivariate datasets.
 ```
 vanar = Vanar(n_lags=5, n_variables = 1, hidden_layer_sizes=[10], n_components=3, autoencoder_wd=0, forecast_wd=0, autoencoder_activ="relu", forecaster_activ="relu", autoen_optim = Optimizers.sgd_optimizer, fore_optim = Optimizers.sgd_optimizer)
 
-vanar.fit(endog, epochs=1000, batch_size=64, learning_rate=0.001)
+vanar.fit(endog.unsqueeze(1), auto_epochs = 1000, fore_epochs=1500000, batch_size=64, learning_rate=0.000001)
 y_pred_vanar = vanar.predict_next_period(data, horizon=5)
 print("VANAR predictions:", y_pred_vanar)
 ```
