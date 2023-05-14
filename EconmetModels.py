@@ -92,11 +92,12 @@ class DeepIv:
 
 # Vector Autoencoding Nonlinear Autoregression
 class Vanar:
-    def __init__(self, n_lags, hidden_layer_sizes, n_components, autoencoder_wd = 0.0, forecast_wd = 0.0, add_bias = True, autoencoder_activ="linear", forecaster_activ="linear",
+    def __init__(self, n_lags, n_variables, hidden_layer_sizes, n_components, autoencoder_wd = 0.0, forecast_wd = 0.0, add_bias = True, autoencoder_activ="linear", forecaster_activ="linear",
                  autoen_optim=Optimizers.sgd_optimizer, fore_optim=Optimizers.sgd_optimizer):
         self.n_lags = n_lags
+        self.n_variables = n_variables
         self.autoencoder = PerceptronMain(
-            layer_sizes=[n_lags, n_components, n_lags],
+            layer_sizes=[n_variables * n_lags, n_components, n_variables * n_lags],
             activation_function=autoencoder_activ,
             optimizer_function=autoen_optim,
             weight_decay=autoencoder_wd,
@@ -114,31 +115,39 @@ class Vanar:
         beta_hat = WorkhorseFunctions.ols_estimator_torch(X, y)
         self.forecaster.weights[0].data = beta_hat.t()
 
-    def fit(self, data, epochs, batch_size, learning_rate, validation_split=0.2, epoch_step=100):
+    def fit(self, data, epochs, batch_size, learning_rate, validation_split=0.2, epoch_step=None):
+        # Prepare the input-output pairs
         X, y = WorkhorseFunctions.create_input_output_pairs(data, self.n_lags)
+    
+        # Split the data into training and validation sets
         n_validation = int(validation_split * X.shape[0])
         X_train, y_train = X[:-n_validation], y[:-n_validation]
         X_val, y_val = X[-n_validation:], y[-n_validation:]
-
+    
         # Train the autoencoder
         self.autoencoder.fit(X_train, X_train, epochs=epochs, batch_size=batch_size, learning_rate=learning_rate,
-                             epoch_step=epoch_step)
-
+                            epoch_step=epoch_step)
+    
         # Encode the input data
         X_train_encoded = self.autoencoder.predict(X_train)[:, :self.n_lags]
         X_val_encoded = self.autoencoder.predict(X_val)[:, :self.n_lags]
-
+    
+        # Change y_train shape
+        y_train = y_train.view(-1, self.n_variables)
+    
         # Initialize VANAR weights
-        self.initialize_forecaster_weights(X_train_encoded, y_train.view(-1, 1))
-
+        self.initialize_forecaster_weights(X_train_encoded, y_train)
+    
         # Train the forecaster
         self.forecaster.fit(X_train_encoded, y_train, epochs=epochs, batch_size=batch_size, learning_rate=learning_rate,
                             epoch_step=epoch_step)
 
-        # Validate the model
+        self.X_encoded, self.y = torch.cat((X_train_encoded, X_val_encoded), dim=0), y
+
+        # Compute validation MSE
         y_val_pred = self.forecaster.predict(X_val_encoded)
-        mse = torch.mean((y_val_pred - y_val) ** 2)
-        print("Validation MSE:", mse.item())
+        mse_val = torch.mean((y_val_pred - y_val) ** 2)
+        print("Validation MSE:", mse_val.item())
 
     def predict_next_period(self, data, horizon):
         predictions = []
@@ -151,3 +160,113 @@ class Vanar:
             data = torch.cat((data, torch.tensor([y_next])), dim=0)
 
         return torch.tensor(predictions)
+
+    def nonlinear_granger_causality(self, epochs, batch_size, learning_rate, activation_function="linear", exclude_variable=None):
+        error_variance_full = self.compute_forecast_error_variance(self.X_encoded, self.y)
+
+        gc_indices = []
+        for i in range(self.n_lags):
+            if i == exclude_variable:
+                continue
+
+            X_reduced_encoded = torch.cat((self.X_encoded[:, :i], self.X_encoded[:, i+1:]), dim=1)
+        
+            reduced_forecaster = PerceptronMain(
+                layer_sizes=[self.n_lags - 1] + self.forecaster.layer_sizes[1:-1] + [1],
+                activation_function=activation_function,
+                optimizer_function=self.forecaster.optimizer_function,
+                weight_decay=self.forecaster.weight_decay,
+                add_bias=self.forecaster.add_bias
+            )
+
+            # Fit the reduced forecaster
+            reduced_forecaster.fit(X_reduced_encoded, self.y, epochs=epochs, batch_size=batch_size, learning_rate=learning_rate)
+
+            error_variance_reduced = self.compute_forecast_error_variance(X_reduced_encoded, self.y, reduced_forecaster)
+
+            gc_index = 1 - error_variance_reduced / error_variance_full
+            gc_indices.append(gc_index.item())
+
+        return gc_indices
+
+    def compute_forecast_error_variance(self, X_encoded, y, forecaster=None):
+        if forecaster is None:
+            forecaster = self.forecaster
+        y_pred = forecaster.predict(X_encoded)
+        return torch.mean((y_pred - y) ** 2)
+
+    def granger_causality_p_values(self, gc_indices): 
+        p_values = []
+        dof = self.n_lags * self.n_variables
+    
+        for gc_index in gc_indices:
+            LR = -2 * torch.log(torch.tensor(gc_index))
+            p_value = 1 - self.chi2_cdf(LR, dof)
+            p_values.append(p_value.item())
+    
+        return p_values
+
+    # Temporary solution until PyTorchDistributionsExtended is finished
+    def chi2_cdf(self, x, k):
+        k = torch.tensor(k, dtype=torch.float64)  # Convert k to a tensor
+        return torch.igamma(k / 2, x / 2)
+
+class DeepGmm:
+    def __init__(self, first_stage_layer_sizes, second_stage_layer_sizes, first_activation, second_activation, optimizer_function, add_bias=True):
+        self.first_stage_network = PerceptronMain(layer_sizes=first_stage_layer_sizes, activation_function=first_activation, optimizer_function=optimizer_function, add_bias=add_bias)
+        self.second_stage_network = PerceptronMain(layer_sizes=second_stage_layer_sizes, activation_function=second_activation, optimizer_function=optimizer_function, add_bias=add_bias)
+
+    def gmm_loss(self, y_pred, y_true, weights):
+        moment_conditions = y_true - y_pred
+
+        # Compute the GMM loss
+        gmm_loss = (moment_conditions.T * weights) @ moment_conditions
+
+        return gmm_loss
+
+    def fit(self, X, Z, y, epochs, batch_size, learning_rate, gmm_steps=1, regularize=False, regularization_param=1e-6, epoch_step=100):
+        # Fit the first-stage network using Z as input and X as output
+        self.first_stage_network.fit(Z, X, epochs, batch_size, learning_rate, epoch_step=epoch_step)
+
+        # Estimate the instrument variable
+        estimated_IV = self.first_stage_network.predict(Z)
+
+        # Initialize GMM weights
+        gmm_weights = torch.eye(y.shape[1]) / y.shape[1]
+
+        for step in range(gmm_steps):
+            # Fit the second-stage network using the estimated instrument variable and y
+            self.second_stage_network.fit(estimated_IV, y, epochs, batch_size, learning_rate, epoch_step=epoch_step)
+
+            # Predict the outcome using the estimated instrument variable
+            y_pred = self.second_stage_network.predict(estimated_IV)
+
+            # Calculate the moment conditions
+            moment_conditions = y - y_pred
+
+            # Update the GMM weights
+            gmm_weights = self.update_gmm_weights(moment_conditions, regularize=regularize, regularization_param=regularization_param)
+
+            # Calculate the GMM loss
+            loss = self.gmm_loss(y_pred, y, gmm_weights)
+            print(f"GMM step {step + 1}, loss: {loss.item()}")
+
+    def update_gmm_weights(self, moment_conditions, regularize=False, regularization_param=1e-6):
+        # Calculate the moment matrix
+        moment_matrix = moment_conditions.T @ moment_conditions
+
+        # Regularize the moment matrix if needed
+        if regularize:
+            moment_matrix += regularization_param * torch.eye(moment_matrix.shape[0])
+
+        # Compute the inverse of the moment matrix
+        inverse_moment_matrix = torch.inverse(moment_matrix)
+
+        # Update the GMM weights
+        new_weights = inverse_moment_matrix / torch.trace(inverse_moment_matrix)
+
+        return new_weights
+
+    def predict(self, X):
+        # Predict the outcome using the estimated instrument variable
+        return self.second_stage_network.predict(X)
