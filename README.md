@@ -194,3 +194,4 @@ The `PerceptronShap` class will be configured to support more models later on.
 - King, G., & Nielsen, R. (2019). Why propensity scores should not be used for matching. Political analysis, 27(4), 435-454.
 - Lundberg, S. M., & Lee, S. I. (2017). A unified approach to interpreting model predictions. Advances in neural information processing systems, 30.
 - Sharma, A., & Kiciman, E. (2020). DoWhy: An end-to-end library for causal inference. arXiv preprint arXiv:2011.04216.
+- Tank, A., Covert, I., Foti, N., Shojaie, A., & Fox, E. B. (2021). Neural granger causality. IEEE Transactions on Pattern Analysis and Machine Intelligence, 44(8), 4267-4279.
