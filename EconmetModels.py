@@ -115,7 +115,7 @@ class Vanar:
         beta_hat = WorkhorseFunctions.ols_estimator_torch(X, y)
         self.forecaster.weights[0].data = beta_hat.t()
 
-    def fit(self, data, epochs, batch_size, learning_rate, validation_split=0.2, epoch_step=None):
+    def fit(self, data, auto_epochs, fore_epochs, batch_size, learning_rate, validation_split=0.2, epoch_step=None):
         # Prepare the input-output pairs
         X, y = WorkhorseFunctions.create_input_output_pairs(data, self.n_lags)
     
@@ -125,7 +125,7 @@ class Vanar:
         X_val, y_val = X[-n_validation:], y[-n_validation:]
     
         # Train the autoencoder
-        self.autoencoder.fit(X_train, X_train, epochs=epochs, batch_size=batch_size, learning_rate=learning_rate,
+        self.autoencoder.fit(X_train, X_train, epochs=auto_epochs, batch_size=batch_size, learning_rate=learning_rate,
                             epoch_step=epoch_step)
     
         # Encode the input data
@@ -139,7 +139,7 @@ class Vanar:
         self.initialize_forecaster_weights(X_train_encoded, y_train)
     
         # Train the forecaster
-        self.forecaster.fit(X_train_encoded, y_train, epochs=epochs, batch_size=batch_size, learning_rate=learning_rate,
+        self.forecaster.fit(X_train_encoded, y_train, epochs=fore_epochs, batch_size=batch_size, learning_rate=learning_rate,
                             epoch_step=epoch_step)
 
         self.X_encoded, self.y = torch.cat((X_train_encoded, X_val_encoded), dim=0), y
@@ -161,7 +161,7 @@ class Vanar:
 
         return torch.tensor(predictions)
 
-    def nonlinear_granger_causality(self, epochs, batch_size, learning_rate, activation_function="linear", exclude_variable=None):
+    def nonlinear_granger_causality(self, epocs, batch_size, learning_rate, weight_decay = 0.0, activation_function="linear", exclude_variable=None):
         error_variance_full = self.compute_forecast_error_variance(self.X_encoded, self.y)
 
         gc_indices = []
@@ -175,7 +175,7 @@ class Vanar:
                 layer_sizes=[self.n_lags - 1] + self.forecaster.layer_sizes[1:-1] + [1],
                 activation_function=activation_function,
                 optimizer_function=self.forecaster.optimizer_function,
-                weight_decay=self.forecaster.weight_decay,
+                weight_decay=weight_decay,
                 add_bias=self.forecaster.add_bias
             )
 
