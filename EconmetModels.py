@@ -144,6 +144,11 @@ class Vanar:
 
         self.X_encoded, self.y = torch.cat((X_train_encoded, X_val_encoded), dim=0), y
 
+        # Compute validation MSE
+        y_val_pred = self.forecaster.predict(X_val_encoded)
+        mse_val = torch.mean((y_val_pred - y_val) ** 2)
+        print("Validation MSE:", mse_val.item())
+
     def predict_next_period(self, data, horizon):
         predictions = []
 
@@ -181,9 +186,6 @@ class Vanar:
 
             gc_index = 1 - error_variance_reduced / error_variance_full
             gc_indices.append(gc_index.item())
-
-            print("Reduced EV:", error_variance_reduced)
-            print("Full EV:", error_variance_full)
 
         return gc_indices
 
