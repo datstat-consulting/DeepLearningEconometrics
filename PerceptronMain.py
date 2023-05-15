@@ -46,7 +46,7 @@ class PerceptronMain:
     def optimize(self, gradients, learning_rate, momentum):
         self.weights, self.velocity = self.optimizer_function(self.weights, gradients, learning_rate, self.weight_decay, momentum = momentum, velocity=self.velocity, squared_gradients=self.squared_gradients)
 
-    def fit(self, X, y, epochs, batch_size, learning_rate, momentum, epoch_step=100):
+    def fit(self, X, y, epochs, batch_size, learning_rate, momentum = 0, epoch_step=100):
         step = epoch_step
         current_epochs = epochs
         if not isinstance(X, torch.Tensor):
