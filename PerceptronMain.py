@@ -3,7 +3,6 @@
 """
 
 import torch
-
 class PerceptronMain:
     def __init__(self, layer_sizes, activation_function, optimizer_function, weight_decay= 0.0, add_bias = True):
         self.layer_sizes = layer_sizes
@@ -19,6 +18,8 @@ class PerceptronMain:
 
     def initialize_weights(self, dtype=torch.float64):
         self.weights = [torch.randn(n, m, dtype=dtype) for n, m in zip(self.layer_sizes[:-1], self.layer_sizes[1:])]
+        self.velocity = None
+        self.squared_gradients = [torch.zeros_like(w) for w in self.weights]
 
     def forward(self, X):
         self.a_values = [X]
@@ -43,9 +44,7 @@ class PerceptronMain:
         return gradients
 
     def optimize(self, gradients, learning_rate):
-        #self.weights, updated_params = self.optimizer_function(self.weights, gradients, learning_rate, self.weight_decay, **self.optimizer_params)
-        #self.optimizer_params.update(updated_params)
-        self.weights = self.optimizer_function(self.weights, gradients, learning_rate, self.weight_decay)
+        self.weights, self.velocity = self.optimizer_function(self.weights, gradients, learning_rate, self.weight_decay, velocity=self.velocity, squared_gradients=self.squared_gradients)
 
     def fit(self, X, y, epochs, batch_size, learning_rate, epoch_step=100, optimizer_parameters=None):
        # if optimizer_parameters is None:
@@ -106,36 +105,51 @@ class PerceptronMain:
     
 class Optimizers:
     @staticmethod
-    def sgd_optimizer(weights, gradients, learning_rate, weight_decay, momentum=None, velocity=None, eps=None):
-        new_weights = [w - learning_rate * (g + weight_decay * w) for w, g in zip(weights, gradients)]
-        return new_weights
+    def sgd_optimizer(weights, gradients, learning_rate, weight_decay, momentum=0.0, velocity=None, **kwargs):
+        if velocity is None:
+            velocity = [torch.zeros_like(w) for w in weights]
 
-    #def sgd_optimizer(weights, gradients, learning_rate, weight_decay, momentum=0.0, velocity=None, **kwargs):
-        #velocity = [torch.zeros_like(w) for w in weights]
-        #new_velocity = [momentum * v + learning_rate * (g + weight_decay * w) for v, w, g in zip(velocity, weights, gradients)]
-        #new_weights = [w - v for w, v in zip(weights, new_velocity)]
-        #return new_weights, new_velocity
+        # update the velocity
+        velocity = [momentum * v + (1 - momentum) * g for v, g in zip(velocity, gradients)]
+        
+        # update the weights
+        new_weights = [w - learning_rate * v for w, v in zip(weights, velocity)]
+
+        return new_weights, velocity
 
     @staticmethod
-    def adagrad_optimizer(weights, gradients, learning_rate, weight_decay, squared_gradients, eps=1e-8, **kwargs):
+    def adagrad_optimizer(weights, gradients, learning_rate, weight_decay, squared_gradients=None, eps=1e-8, **kwargs):
+        if squared_gradients is None:
+            squared_gradients = [torch.zeros_like(w) for w in weights]
+
+        # update the squared gradients
         new_squared_gradients = [sg + g ** 2 for sg, g in zip(squared_gradients, gradients)]
+        
+        # update the weights
         new_weights = [w - learning_rate / (torch.sqrt(sg) + eps) * (g + weight_decay * w) for w, sg, g in zip(weights, new_squared_gradients, gradients)]
+
         return new_weights, new_squared_gradients
 
 
 class TorchActivations:
     activations = {
         'sigmoid': lambda x: 1 / (1 + torch.exp(-x)),
+        'tanh': lambda x: torch.tanh(x),
         'relu': lambda x: torch.max(torch.zeros_like(x), x),
         'relu_squared': lambda x: torch.pow(torch.max(torch.zeros_like(x), x), 2),
-        'linear': lambda x: x
+        'linear': lambda x: x,
+        'softmax': lambda x: torch.exp(x) / torch.sum(torch.exp(x), axis=0),
+        'logistic': lambda x: 1 / (1 + torch.exp(-x))  # Logistic is the same as sigmoid
     }
     
     derivatives = {
-        'sigmoid': lambda x: sigmoid(x) * (1 - sigmoid(x)),
+        'sigmoid': lambda x: TorchActivations.activations['sigmoid'](x) * (1 - TorchActivations.activations['sigmoid'](x)),
+        'tanh': lambda x: 1 - torch.pow(TorchActivations.activations['tanh'](x), 2),
         'relu': lambda x: (x > 0).float(),
         'relu_squared': lambda x: 2 * torch.max(torch.zeros_like(x), x),
-        'linear': lambda x: torch.ones_like(x)
+        'linear': lambda x: torch.ones_like(x),
+        'softmax': lambda x: TorchActivations.activations['softmax'](x) * (1 - TorchActivations.activations['softmax'](x)),
+        'logistic': lambda x: TorchActivations.activations['logistic'](x) * (1 - TorchActivations.activations['logistic'](x))  # Logistic is the same as sigmoid
     }
     
     @staticmethod
@@ -145,4 +159,3 @@ class TorchActivations:
     @staticmethod
     def derivative(activation_name):
         return TorchActivations.derivatives.get(activation_name, None)
-
