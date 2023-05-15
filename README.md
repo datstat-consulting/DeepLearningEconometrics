@@ -55,6 +55,7 @@ nn.fit(X1, y,
        epochs=1000, 
        batch_size=32, 
        learning_rate=0.0001, 
+       momentum = 0.0
        epoch_step=100)
 
 # Make predictions using the trained single layer perceptron
@@ -70,13 +71,13 @@ model = DeepIv(first_stage_layer_sizes=[n_instruments, 10, n_features],
                second_stage_layer_sizes=[n_features, 10, n_classes],
                first_activation="relu",
                second_activation="relu",
-               optimizer_function=Optimizers.sgd_optimizer)
+               optimizer_function=Optimizers.adagrad_optimizer)
 
 # Train the DeepIV model
 epochs = 1000
 batch_size = 32
 learning_rate = 0.001
-model.fit(X, Z, y, epochs, batch_size, learning_rate, epoch_step = 100)
+model.fit(NewIndep, Z, NewEndog, epochs, batch_size, learning_rate, first_momentum = 0, second_momentum = 0, epoch_step = 100)
 
 # Fit on new independent variable
 model.predict(NewX)
@@ -96,7 +97,7 @@ model = DeepGmm(first_stage_layer_sizes=[n_instruments, 10, n_features],
 epochs = 1000
 batch_size = 32
 learning_rate = 0.001
-model.fit(NewIndep, Z, NewEndog, epochs, batch_size, learning_rate, epoch_step = 100)
+model.fit(NewIndep, Z, NewEndog, epochs, batch_size, learning_rate, first_momentum = 0, second_momentum = 0, epoch_step = 100)
 ```
 
 ## VANAR
@@ -104,7 +105,13 @@ The `Vanar` class is suitable for both univariate and multivariate datasets.
 ```
 vanar = Vanar(n_lags=5, n_variables = 1, hidden_layer_sizes=[10], n_components=3, autoencoder_wd=0, forecast_wd=0, autoencoder_activ="relu", forecaster_activ="relu", autoen_optim = Optimizers.sgd_optimizer, fore_optim = Optimizers.sgd_optimizer)
 
-vanar.fit(endog.unsqueeze(1), auto_epochs = 1000, fore_epochs=1500000, batch_size=64, learning_rate=0.000001)
+vanar.fit(endog.unsqueeze(1), 
+          auto_epochs = 1000, 
+          fore_epochs=15000, 
+          batch_size=64, 
+          learning_rate=0.000001, 
+          first_momentum = 0.0, 
+          second_momentum = 0.0)
 y_pred_vanar = vanar.predict_next_period(data, horizon=5)
 print("VANAR predictions:", y_pred_vanar)
 ```
@@ -149,7 +156,12 @@ The causal inference is estimated using a perceptron.
 ```
 ci = CausalInference(data=data, treatment='treatment', outcome='outcome', graph=graph)
 ci.identify_effect()
-ate_estimate = ci.estimate_effect(method_name='mdm', hidden_layer_sizes = [], activation_function = "relu", optimizer_function = Optimizers.sgd_optimizer, weight_decay = 0.0)
+ate_estimate = ci.estimate_effect(method_name='mdm', 
+               hidden_layer_sizes = [], 
+               activation_function = "relu", 
+               optimizer_function = Optimizers.sgd_optimizer,
+               momentum = 0.0,
+               weight_decay = 0.0)
 ```
 Print and plot results, including refutation for robustness checking.
 ```
