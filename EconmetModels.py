@@ -161,7 +161,7 @@ class Vanar:
 
         return torch.tensor(predictions)
 
-    def nonlinear_granger_causality(self, epocs, batch_size, learning_rate, weight_decay = 0.0, activation_function="linear", exclude_variable=None):
+    def nonlinear_granger_causality(self, epochs, batch_size, learning_rate, weight_decay = 0.0, activation_function="linear", exclude_variable=None):
         error_variance_full = self.compute_forecast_error_variance(self.X_encoded, self.y)
 
         gc_indices = []
