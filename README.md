@@ -162,22 +162,30 @@ ate_estimate = ci.estimate_effect(method_name='mdm',
                optimizer_function = Optimizers.sgd_optimizer,
                momentum = 0.0,
                weight_decay = 0.0)
-```
-Print and plot results, including refutation for robustness checking.
-```
 print(f"Estimated Treatment Effect per observation: {ate_estimate}")
+```
+To check estimate robustness, perform refutation. Only random common cause is implemented for now.
+```
+# Refute the estimated effect
+refutation_result = ci.random_common_cause_refutation(method_name='mdm', 
+                hidden_layer_sizes = [], 
+                activation_function = "relu", 
+                optimizer_function = Optimizers.sgd_optimizer, 
+                momentum = 0,
+                weight_decay = 0.0)
+print("Refutation result:")
+print(refutation_result)
+```
+Print and plot results.
+```
 # Plot average treatment effect
 ci.plot_estimates(use_plotly=True, plot_type="average")
 
 # Plot treatment effect per observation
 ci.plot_estimates(use_plotly=True, plot_type="side_by_side")
-
-# Refute the estimated effect
-refutation_result = ci.refute_effect(method_name='random_common_cause')
-print("Refutation result:")
-print(refutation_result)
-
-# Print summary, including both original value and treatment effects.
+``
+Print the summary of the original causal estimate and the refutation estimate.
+```
 ci.summary()
 ```
 
