@@ -18,7 +18,7 @@ class ArimaSlp(PerceptronMain):
             add_bias=add_bias
         )
 
-    def fit(self, y, epochs, batch_size, learning_rate, epoch_step=100):
+    def fit(self, y, epochs, batch_size, learning_rate, momentum = 0, epoch_step=100):
         if not isinstance(y, torch.Tensor):
             y = torch.tensor(y, dtype=torch.float64)
 
@@ -44,7 +44,7 @@ class ArimaSlp(PerceptronMain):
         initial_weights = torch.cat((ar_coeffs, ma_coeffs), dim=0).t()
         self.weights[0] = initial_weights
 
-        super().fit(X, y_d[self.p + self.q - 1:], epochs, batch_size, learning_rate, epoch_step)
+        super().fit(X, y_d[self.p + self.q - 1:], epochs = epochs, batch_size = batch_size, learning_rate = learning_rate, momentum = momentum, epoch_step = epoch_step)
 
     def predict_next_period(self, y, horizon):
         if not isinstance(y, torch.Tensor):
@@ -73,15 +73,15 @@ class DeepIv:
         self.first_stage_network = PerceptronMain(layer_sizes=first_stage_layer_sizes, activation_function=first_activation, optimizer_function=optimizer_function, add_bias = add_bias)
         self.second_stage_network = PerceptronMain(layer_sizes=second_stage_layer_sizes, activation_function=second_activation, optimizer_function=optimizer_function, add_bias = add_bias)
 
-    def fit(self, X, Z, y, epochs, batch_size, learning_rate, epoch_step = 100):
+    def fit(self, X, Z, y, epochs, batch_size, learning_rate, first_momentum = 0, second_momentum = 0, epoch_step = 100):
         # Fit the first-stage network using Z as input and X as output
-        self.first_stage_network.fit(Z, X, epochs, batch_size, learning_rate, epoch_step = epoch_step)
+        self.first_stage_network.fit(Z, X, epochs, batch_size, learning_rate, first_momentum, epoch_step = epoch_step)
 
         # Estimate the instrument variable
         estimated_IV = self.first_stage_network.predict(Z)
 
         # Fit the second-stage network using the estimated instrument variable and y
-        self.second_stage_network.fit(estimated_IV, y, epochs, batch_size, learning_rate, epoch_step = 100)
+        self.second_stage_network.fit(estimated_IV, y, epochs, batch_size, learning_rate, second_momentum, epoch_step=epoch_step)
 
     def predict(self, X):
         # Estimate the instrument variable
@@ -115,7 +115,7 @@ class Vanar:
         beta_hat = WorkhorseFunctions.ols_estimator_torch(X, y)
         self.forecaster.weights[0].data = beta_hat.t()
 
-    def fit(self, data, auto_epochs, fore_epochs, batch_size, learning_rate, validation_split=0.2, epoch_step=None):
+    def fit(self, data, auto_epochs, fore_epochs, batch_size, learning_rate, first_momentum = 0, second_momentum=0, validation_split=0.2, epoch_step=None):
         # Prepare the input-output pairs
         X, y = WorkhorseFunctions.create_input_output_pairs(data, self.n_lags)
     
@@ -125,7 +125,8 @@ class Vanar:
         X_val, y_val = X[-n_validation:], y[-n_validation:]
     
         # Train the autoencoder
-        self.autoencoder.fit(X_train, X_train, epochs=auto_epochs, batch_size=batch_size, learning_rate=learning_rate,
+        self.autoencoder.fit(X_train, X_train, epochs=auto_epochs, batch_size=batch_size, learning_rate=learning_rate, 
+                            momentum = first_momentum,
                             epoch_step=epoch_step)
     
         # Encode the input data
@@ -140,6 +141,7 @@ class Vanar:
     
         # Train the forecaster
         self.forecaster.fit(X_train_encoded, y_train, epochs=fore_epochs, batch_size=batch_size, learning_rate=learning_rate,
+                            momentum = second_momentum,
                             epoch_step=epoch_step)
 
         self.X_encoded, self.y = torch.cat((X_train_encoded, X_val_encoded), dim=0), y
@@ -161,7 +163,7 @@ class Vanar:
 
         return torch.tensor(predictions)
 
-    def nonlinear_granger_causality(self, epochs, batch_size, learning_rate, weight_decay = 0.0, activation_function="linear", exclude_variable=None):
+    def nonlinear_granger_causality(self, epochs, batch_size, learning_rate, momentum = 0, weight_decay = 0.0, activation_function="linear", exclude_variable=None):
         error_variance_full = self.compute_forecast_error_variance(self.X_encoded, self.y)
 
         gc_indices = []
@@ -180,7 +182,11 @@ class Vanar:
             )
 
             # Fit the reduced forecaster
-            reduced_forecaster.fit(X_reduced_encoded, self.y, epochs=epochs, batch_size=batch_size, learning_rate=learning_rate)
+            reduced_forecaster.fit(X_reduced_encoded, 
+                self.y, epochs=epochs, 
+                batch_size=batch_size, 
+                learning_rate=learning_rate,
+                momentum = momentum)
 
             error_variance_reduced = self.compute_forecast_error_variance(X_reduced_encoded, self.y, reduced_forecaster)
 
@@ -224,9 +230,9 @@ class DeepGmm:
 
         return gmm_loss
 
-    def fit(self, X, Z, y, epochs, batch_size, learning_rate, gmm_steps=1, regularize=False, regularization_param=1e-6, epoch_step=100):
+    def fit(self, X, Z, y, epochs, batch_size, learning_rate, first_momentum = 0, second_momentum = 0, gmm_steps=1, regularize=False, regularization_param=1e-6, epoch_step=100):
         # Fit the first-stage network using Z as input and X as output
-        self.first_stage_network.fit(Z, X, epochs, batch_size, learning_rate, epoch_step=epoch_step)
+        self.first_stage_network.fit(Z, X, epochs, batch_size, learning_rate, first_momentum, epoch_step=epoch_step)
 
         # Estimate the instrument variable
         estimated_IV = self.first_stage_network.predict(Z)
@@ -236,7 +242,7 @@ class DeepGmm:
 
         for step in range(gmm_steps):
             # Fit the second-stage network using the estimated instrument variable and y
-            self.second_stage_network.fit(estimated_IV, y, epochs, batch_size, learning_rate, epoch_step=epoch_step)
+            self.second_stage_network.fit(estimated_IV, y, epochs, batch_size, learning_rate, second_momentum, epoch_step=epoch_step)
 
             # Predict the outcome using the estimated instrument variable
             y_pred = self.second_stage_network.predict(estimated_IV)
@@ -270,3 +276,4 @@ class DeepGmm:
     def predict(self, X):
         # Predict the outcome using the estimated instrument variable
         return self.second_stage_network.predict(X)
+

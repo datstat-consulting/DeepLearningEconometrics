@@ -18,6 +18,13 @@ class CausalDAG:
             for neighbor in self.graph[node]:
                 print(f"{node} -> {neighbor}")
                 
+#import torch
+import pandas as pd
+import itertools
+from typing import Union
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+
 class CausalInference:
     def __init__(self, data: pd.DataFrame, treatment: str, outcome: str, graph: Union[CausalDAG, str] = None):
         self.data = data
@@ -25,7 +32,7 @@ class CausalInference:
         self.outcome = outcome
         self.graph = graph
 
-    def estimate_effect(self, method_name="mdm", hidden_layer_sizes = [10], activation_function = "linear", optimizer_function = Optimizers.sgd_optimizer, weight_decay = 0.0):
+    def estimate_effect(self, method_name="mdm", hidden_layer_sizes = [10], activation_function = "linear", optimizer_function = Optimizers.sgd_optimizer, momentum = 0.0, weight_decay = 0.0):
         if not hasattr(self, "estimand"):
             self.identify_effect()
     
@@ -35,7 +42,7 @@ class CausalInference:
 
         if method_name == "mdm":
             mdm = MahalanobisMatcher(perceptron=True)
-            mdm.fit(X, y, treatment, hidden_layer_sizes = hidden_layer_sizes, activation_function = activation_function, optimizer_function = optimizer_function, weight_decay = weight_decay)
+            mdm.fit(X, y, treatment, hidden_layer_sizes = hidden_layer_sizes, activation_function = activation_function, optimizer_function = optimizer_function, momentum = momentum, weight_decay = weight_decay)
             self.estimate = mdm.predict(X, treatment)
         else:
             raise ValueError(f"Unsupported estimation method: {method_name}")
@@ -85,7 +92,7 @@ class CausalInference:
         else:
             raise ValueError(f"Unsupported refutation method: {method_name}")
 
-    def random_common_cause_refutation(self):
+    def random_common_cause_refutation(self, method_name="mdm", hidden_layer_sizes = [10], activation_function = "linear", optimizer_function = Optimizers.sgd_optimizer, momentum = 0.0, weight_decay = 0.0):
         random_common_cause = torch.randn(len(self.data))
         data_with_random_common_cause = self.data.copy()
         data_with_random_common_cause["random_common_cause"] = random_common_cause
@@ -97,7 +104,13 @@ class CausalInference:
             graph=self.graph
         )
         ci_with_random_common_cause.identify_effect()
-        ate_estimate_with_random_common_cause = ci_with_random_common_cause.estimate_effect(method_name="mdm")
+        ate_estimate_with_random_common_cause = ci_with_random_common_cause.estimate_effect(method_name=method_name,
+                                                hidden_layer_sizes=hidden_layer_sizes, 
+                                                activation_function = activation_function,
+                                                optimizer_function = optimizer_function,
+                                                momentum = momentum,
+                                                weight_decay=weight_decay)
+        self.refutation_estimate = ate_estimate_with_random_common_cause
 
         return {
             "original_estimate": self.estimate,
@@ -106,26 +119,29 @@ class CausalInference:
 
     def summary(self):
         if not hasattr(self, "estimate"):
-            self.estimate_effect()
+            raise ValueError(f"Perform estimates first")
+
+        if not hasattr(self, "refutation_estimate"):
+            raise ValueError(f"Perform refutation first")
 
         print("Causal Estimate")
         print("--------------")
         print(self.estimate)
+        print("Mean estimate:")
+        print(torch.mean(self.estimate))
         print("\nRefutation Results")
         print("-------------------")
-
-        for method in ["random_common_cause"]:
-            print(f"\nRefutation method: {method}")
-            refutation_result = self.refute_effect(method_name=method)
-            print(refutation_result)
+        print(self.refutation_estimate)
+        print("Mean refutation:")
+        print(torch.mean(self.refutation_estimate))
 
     def plot_estimates(self, use_plotly=True, plot_type="average"):
         if not hasattr(self, "estimate"):
             self.estimate_effect()
 
-        refutation_result = self.refute_effect(method_name="random_common_cause")
+        estimate_with_random_common_cause = self.refutation_estimate
         original_estimate = self.estimate
-        estimate_with_random_common_cause = refutation_result["estimate_with_random_common_cause"]
+        #estimate_with_random_common_cause = refutation_result["estimate_with_random_common_cause"]
 
         if plot_type == "average":
             original_estimate_mean = torch.mean(original_estimate)
@@ -169,7 +185,7 @@ class MahalanobisMatcher:
         self.n_neighbors = n_neighbors
         self.perceptron = perceptron
 
-    def fit(self, X, y, treatment, hidden_layer_sizes, activation_function, optimizer_function, weight_decay):
+    def fit(self, X, y, treatment, hidden_layer_sizes, activation_function, optimizer_function, momentum, weight_decay):
         self.X = X
         self.y = y
         self.treatment = treatment
@@ -179,6 +195,7 @@ class MahalanobisMatcher:
             self.model.fit(X, y, epochs=1000, 
             batch_size=32, 
             learning_rate=0.0001, 
+            momentum = momentum,
             epoch_step=100,)
 
     def predict(self, X, treatment_values):
