@@ -43,12 +43,10 @@ class PerceptronMain:
 
         return gradients
 
-    def optimize(self, gradients, learning_rate):
-        self.weights, self.velocity = self.optimizer_function(self.weights, gradients, learning_rate, self.weight_decay, velocity=self.velocity, squared_gradients=self.squared_gradients)
+    def optimize(self, gradients, learning_rate, momentum):
+        self.weights, self.velocity = self.optimizer_function(self.weights, gradients, learning_rate, self.weight_decay, momentum = momentum, velocity=self.velocity, squared_gradients=self.squared_gradients)
 
-    def fit(self, X, y, epochs, batch_size, learning_rate, epoch_step=100, optimizer_parameters=None):
-       # if optimizer_parameters is None:
-            #optimizer_parameters = {}
+    def fit(self, X, y, epochs, batch_size, learning_rate, momentum, epoch_step=100):
         step = epoch_step
         current_epochs = epochs
         if not isinstance(X, torch.Tensor):
@@ -74,16 +72,7 @@ class PerceptronMain:
                             self.forward(X_batch)
                             gradients = self.backward(X_batch, y_batch, learning_rate)
                             
-                            self.optimize(gradients, learning_rate)
-                            
-                            # Update weights with the optimizer function and provided parameters
-                            #self.weights, *optimizer_params_values = self.optimizer_function(
-                                #self.weights, gradients, learning_rate, self.weight_decay, **optimizer_parameters
-                            #)
-                            
-                            # Update optimizer_parameters with the new values returned by the optimizer function
-                            #for key, value in zip(optimizer_parameters.keys(), optimizer_params_values):
-                                #optimizer_parameters[key] = value
+                            self.optimize(gradients = gradients, learning_rate = learning_rate, momentum = momentum)
 
                         if w:
                             raise RuntimeWarning("Overflow encountered during training.")
