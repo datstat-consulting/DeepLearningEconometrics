@@ -101,11 +101,11 @@ model.fit(NewIndep, Z, NewEndog, epochs, batch_size, learning_rate, first_moment
 ```
 
 ## VANAR
-The `Vanar` class is suitable for both univariate and multivariate datasets. 
+The `Vanar` class is suitable for both univariate and multivariate datasets. In this example, we use a univariate dataset.
 ```
 vanar = Vanar(n_lags=5, n_variables = 1, hidden_layer_sizes=[10], n_components=3, autoencoder_wd=0, forecast_wd=0, autoencoder_activ="relu", forecaster_activ="relu", autoen_optim = Optimizers.sgd_optimizer, fore_optim = Optimizers.sgd_optimizer)
 
-vanar.fit(endog.unsqueeze(1), 
+vanar.fit(endog.unsqueeze(1), # remove '.unsqueeze(1)' for multivariate data
           auto_epochs = 1000, 
           fore_epochs=15000, 
           batch_size=64, 
