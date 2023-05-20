@@ -183,7 +183,7 @@ ci.plot_estimates(use_plotly=True, plot_type="average")
 
 # Plot treatment effect per observation
 ci.plot_estimates(use_plotly=True, plot_type="side_by_side")
-``
+```
 Print the summary of the original causal estimate and the refutation estimate.
 ```
 ci.summary()
