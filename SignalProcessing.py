@@ -1,9 +1,5 @@
 import torch.nn as nn
 
-import torch.nn as nn
-
-import torch.nn as nn
-
 class KalmanNet:
     def __init__(self, layer_sizes_f, layer_sizes_h, activation_function, optimizer_function, f_add_bias = True, h_add_bias = True):
         self.layer_sizes_f = layer_sizes_f
