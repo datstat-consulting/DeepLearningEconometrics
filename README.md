@@ -189,6 +189,32 @@ Print the summary of the original causal estimate and the refutation estimate.
 ci.summary()
 ```
 
+## KalmanNet
+The `KalmanNet` class uses an RNN to estimate the Kalman Gain. It also uses Multilayer Perceptrons to estimate the state and observation equations. There is no need for normality in the error term, nor is there a need for the covariance matrices. The memory of the RNN is enough to deal with the latter.
+
+Initialize a KalmanNet instance.
+```
+torch.manual_seed(36)
+kn = KalmanNet(layer_sizes_f = [3, 5, 3], 
+                layer_sizes_h = [3, 5, 1], 
+                activation_function = 'relu', 
+                optimizer_function = Optimizers.sgd_optimizer, 
+                f_add_bias=True, 
+                h_add_bias=True)
+```
+Initialize the state vector as a vector of zeroes, where $n$ is the number of time periods, and $d$ is the dimension of the state vector.
+```
+X = torch.zeros(n, d)
+kn.fit(X, y, epochs=10000, batch_size=128, learning_rate=0.0001)
+```
+Predict and update states using the instance.
+```
+current_state = X[0]
+next_state_pred = kn.predict_next_state(current_state, add_bias = True)
+observation = y[0]
+next_state_estimate = kn.update_state(next_state_pred, observation, add_bias=True) # use .detach() for the tensor of values only
+```
+
 ## Shapley Value
 The Shapley Value of a model shows how each independent variable contributes to output prediction. This is a useful alternative to p-values for interpreting Machine Learning models. It may be computationally efficient to use only one observation to demonstrate how each independent variable contributes to prediction. In this case, we use the very first observation.
 ```
