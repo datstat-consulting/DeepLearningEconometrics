@@ -36,7 +36,7 @@ The following activations are also implemented:
 - `sigmoid`
 - `tanh`
 - `softmax`
-- `logistic`
+- `logistic` (the same as sigmoid, exists for end-user edge cases)
 
 # Examples
 
