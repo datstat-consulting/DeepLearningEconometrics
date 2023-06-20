@@ -2,16 +2,18 @@ import torch.nn as nn
 
 import torch.nn as nn
 
+import torch.nn as nn
+
 class KalmanNet:
-    def __init__(self, layer_sizes_f, layer_sizes_h, activation_function, optimizer_function, add_bias = True):
+    def __init__(self, layer_sizes_f, layer_sizes_h, activation_function, optimizer_function, f_add_bias = True, h_add_bias = True):
         self.layer_sizes_f = layer_sizes_f
         self.layer_sizes_h = layer_sizes_h
         self.activation_function = activation_function
         self.optimizer_function = optimizer_function
         # state transition model
-        self.model_f = PerceptronMain(self.layer_sizes_f, self.activation_function, self.optimizer_function, add_bias=add_bias)
+        self.model_f = PerceptronMain(self.layer_sizes_f, self.activation_function, self.optimizer_function, add_bias=f_add_bias)
         # observation model
-        self.model_h = PerceptronMain(self.layer_sizes_h, self.activation_function, self.optimizer_function, add_bias=add_bias)
+        self.model_h = PerceptronMain(self.layer_sizes_h, self.activation_function, self.optimizer_function, add_bias=h_add_bias)
         # RNN for learning the Kalman Gain
         self.rnn = nn.RNN(input_size=1, hidden_size=1, batch_first=True)
 
