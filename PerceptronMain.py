@@ -15,11 +15,16 @@ class PerceptronMain:
         self.initialize_weights()
         if self.add_bias:
             self.layer_sizes[0] += 1
+        self.m = None
+        self.v = None
+        self.squared_gradients = None
 
     def initialize_weights(self, dtype=torch.float64):
         self.weights = [torch.randn(n, m, dtype=dtype) for n, m in zip(self.layer_sizes[:-1], self.layer_sizes[1:])]
         self.velocity = None
         self.squared_gradients = [torch.zeros_like(w) for w in self.weights]
+        self.m = [torch.zeros_like(w) for w in self.weights]
+        self.v = [torch.zeros_like(w) for w in self.weights]
 
     def forward(self, X):
         self.a_values = [X]
@@ -44,7 +49,7 @@ class PerceptronMain:
         return gradients
 
     def optimize(self, gradients, learning_rate, momentum):
-        self.weights, self.velocity = self.optimizer_function(self.weights, gradients, learning_rate, self.weight_decay, momentum = momentum, velocity=self.velocity, squared_gradients=self.squared_gradients)
+        self.weights, self.velocity, self.squared_gradients, self.m, self.v = self.optimizer_function(self.weights, gradients, learning_rate, self.weight_decay, momentum=momentum, velocity=self.velocity, squared_gradients=self.squared_gradients, m=self.m, v=self.v)
 
     def fit(self, X, y, epochs, batch_size, learning_rate, momentum = 0, epoch_step=100):
         step = epoch_step
@@ -104,7 +109,7 @@ class Optimizers:
         # update the weights
         new_weights = [w - learning_rate * v for w, v in zip(weights, velocity)]
 
-        return new_weights, velocity
+        return new_weights, velocity, None, None, None
 
     @staticmethod
     def adagrad_optimizer(weights, gradients, learning_rate, weight_decay, squared_gradients=None, eps=1e-8, **kwargs):
@@ -117,8 +122,57 @@ class Optimizers:
         # update the weights
         new_weights = [w - learning_rate / (torch.sqrt(sg) + eps) * (g + weight_decay * w) for w, sg, g in zip(weights, new_squared_gradients, gradients)]
 
-        return new_weights, new_squared_gradients
+        return new_weights, None, new_squared_gradients, None, None
 
+    @staticmethod
+    def adadelta(weights, gradients, learning_rate, weight_decay, eps=1e-8, rho=0.9, velocity=None, squared_gradients=None, **kwargs):
+        if squared_gradients is None:
+            squared_gradients = [torch.zeros_like(w) for w in weights]
+        if velocity is None:
+            velocity = [torch.zeros_like(w) for w in weights]
+
+        # update squared_gradients and velocity
+        new_squared_gradients = [rho * sg + (1 - rho) * g ** 2 for sg, g in zip(squared_gradients, gradients)]
+        delta = [torch.sqrt((v + eps) / (sg + eps)) * g for v, g, sg in zip(velocity, gradients, new_squared_gradients)]
+        new_velocity = [rho * v + (1 - rho) * d ** 2 for v, d in zip(velocity, delta)]
+        
+        # update weights
+        new_weights = [w - d - learning_rate * weight_decay * w for w, d in zip(weights, delta)]
+
+        return new_weights, new_velocity, new_squared_gradients, None, None
+
+    @staticmethod
+    def rmsprop(weights, gradients, learning_rate, weight_decay, eps=1e-8, rho=0.9, squared_gradients=None, **kwargs):
+        if squared_gradients is None:
+            squared_gradients = [torch.zeros_like(w) for w in weights]
+
+        # update squared_gradients
+        new_squared_gradients = [rho * sg + (1 - rho) * g ** 2 for sg, g in zip(squared_gradients, gradients)]
+        
+        # update weights
+        new_weights = [w - learning_rate / (torch.sqrt(sg) + eps) * g - learning_rate * weight_decay * w for w, g, sg in zip(weights, gradients, new_squared_gradients)]
+
+        return new_weights, None, new_squared_gradients, None, None
+
+    @staticmethod
+    def adam(weights, gradients, learning_rate, weight_decay, eps=1e-8, beta1=0.9, beta2=0.999, m=None, v=None, t=0, **kwargs):
+        if m is None:
+            m = [torch.zeros_like(w) for w in weights]
+        if v is None:
+            v = [torch.zeros_like(w) for w in weights]
+
+        # update m and v
+        new_m = [beta1 * mt + (1 - beta1) * g for mt, g in zip(m, gradients)]
+        new_v = [beta2 * vt + (1 - beta2) * g ** 2 for vt, g in zip(v, gradients)]
+        
+        # compute bias corrected estimates
+        m_hat = [mt / (1 - beta1 ** (t + 1)) for mt in new_m]
+        v_hat = [vt / (1 - beta2 ** (t + 1)) for vt in new_v]
+        
+        # update weights
+        new_weights = [w - learning_rate * m_h / (torch.sqrt(v_h) + eps) - learning_rate * weight_decay * w for w, m_h, v_h in zip(weights, m_hat, v_hat)]
+
+        return new_weights, None, None, new_m, new_v
 
 class TorchActivations:
     activations = {
