@@ -9,7 +9,8 @@ Nonlinear models are also supported, as well as those with multiple hidden layer
 - Vector Autoencoding Nonlinear Autoregression (VANAR),
 - Deep Instrumental Variables (Deep IV),
 - Deep Generalized Method of Moments (Deep GMM),
-- Causal Inference, and
+- Causal Inference,
+- KalmanNet and
 - more to come.
 
 Finally, model interpretation is given by the Shapley Value. For now, the Shapley Value supports only the `PerceptronMain` class off the bat. Other interpretation methods, like local surrogate models, may follow.
@@ -28,6 +29,9 @@ A good rule of thumb for hidden layers:
 The library implements the following optimizers so far:
 - `sgd_optimizer`: Stochastic Gradient Descent with momentum and velocity.
 - `adagrad_optimizer`: Adagrad.
+- `adam`: Adam.
+- `rmsprop`: RMSProp.
+- `adadelta`: AdaDelta.
 
 The following activations are also implemented:
 - `linear`
