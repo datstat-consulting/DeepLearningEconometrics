@@ -42,6 +42,11 @@ The following activations are also implemented:
 - `softmax`
 - `logistic` (the same as sigmoid, exists for end-user edge cases)
 
+The following loss functions exist by default:
+- `TofallisLoss`
+- `RmseLoss`
+- `MseLoss`
+
 # Examples
 
 ## Generalized Linear Models
@@ -56,11 +61,12 @@ nn = PerceptronMain(layer_sizes=[1, 1],
 
 # Train the single layer perceptron with independent variables X and deepndent variable y
 nn.fit(X1, y, 
-       epochs=1000, 
-       batch_size=32, 
+       epochs=10000, 
+       batch_size=200, 
        learning_rate=0.0001, 
        momentum = 0.0
-       epoch_step=100)
+       epoch_step=100,
+       loss = LossFuncs.TofallisLoss)
 
 # Make predictions using the trained single layer perceptron
 predictions = nn.predict(X)
