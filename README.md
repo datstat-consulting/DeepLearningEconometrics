@@ -260,3 +260,4 @@ The `PerceptronShap` class will be configured to support more models later on.
 - Sharma, A., & Kiciman, E. (2020). DoWhy: An end-to-end library for causal inference. arXiv preprint arXiv:2011.04216.
 - Shevitski, B., Watkins, Y., Man, N., & Girard, M. (2021). Digital signal processing using deep neural networks. arXiv preprint arXiv:2109.10404.
 - Tank, A., Covert, I., Foti, N., Shojaie, A., & Fox, E. B. (2021). Neural granger causality. IEEE Transactions on Pattern Analysis and Machine Intelligence, 44(8), 4267-4279.
+- Tofallis, C. (2015). A better measure of relative prediction accuracy for model selection and model estimation. Journal of the Operational Research Society, 66, 1352-1362.
