@@ -32,15 +32,26 @@ class PerceptronMain:
             self.a_values.append(self.activation_function(self.a_values[-1] @ w))
         return self.a_values[-1]
 
-    def backward(self, X, y, learning_rate):
+    def backward(self, X, y, learning_rate, loss):
         m = X.shape[0]
         gradients = [torch.zeros_like(w) for w in self.weights]
 
         if y.dim() == 1:
             y = y.view(-1, 1)
 
-        delta = (self.a_values[-1] - y) * self.activation_derivative(self.a_values[-2] @ self.weights[-1])
+        #delta = (self.a_values[-1] - y) * self.activation_derivative(self.a_values[-2] @ self.weights[-1])
+        #gradients[-1] = self.a_values[-2].t() @ delta + self.weight_decay * self.weights[-1]
+
+        # Loss function from Tofallis (2015)
+        loss = loss(self.a_values, y)
+
+        # Calculate the derivative of the loss with respect to the output
+        delta = torch.autograd.grad(loss, self.a_values[-1])[0] * self.activation_derivative(self.a_values[-2] @ self.weights[-1])
+
         gradients[-1] = self.a_values[-2].t() @ delta + self.weight_decay * self.weights[-1]
+
+        #delta = (self.a_values[-1] - y) * self.activation_derivative(self.a_values[-2] @ self.weights[-1])
+        #gradients[-1] = self.a_values[-2].t() @ delta + self.weight_decay * self.weights[-1]
 
         for i in range(len(self.weights) - 2, -1, -1):
             delta = (delta @ self.weights[i + 1].t()) * self.activation_derivative(self.a_values[i] @ self.weights[i])
@@ -51,11 +62,13 @@ class PerceptronMain:
     def optimize(self, gradients, learning_rate, momentum):
         self.weights, self.velocity, self.squared_gradients, self.m, self.v = self.optimizer_function(self.weights, gradients, learning_rate, self.weight_decay, momentum=momentum, velocity=self.velocity, squared_gradients=self.squared_gradients, m=self.m, v=self.v)
 
-    def fit(self, X, y, epochs, batch_size, learning_rate, momentum = 0, epoch_step=100):
+    def fit(self, X, y, epochs, batch_size, learning_rate, momentum = 0, epoch_step=100, loss = LossFuncs.TofallisLoss):
         step = epoch_step
         current_epochs = epochs
         if not isinstance(X, torch.Tensor):
             X = torch.tensor(X)
+
+        X.requires_grad = True  # Ensure that X is tracking gradients
 
         self.initialize_weights(dtype=X.dtype)
 
@@ -75,7 +88,7 @@ class PerceptronMain:
                             X_batch = X[i:min(i + batch_size, X.shape[0])]
                             y_batch = y[i:min(i + batch_size, y.shape[0])]
                             self.forward(X_batch)
-                            gradients = self.backward(X_batch, y_batch, learning_rate)
+                            gradients = self.backward(X_batch, y_batch, learning_rate, loss = loss)
                             
                             self.optimize(gradients = gradients, learning_rate = learning_rate, momentum = momentum)
 
@@ -91,6 +104,7 @@ class PerceptronMain:
 
     def predict(self, X):
         X = X.to(self.weights[0].dtype)
+        X.requires_grad = True
         if self.add_bias:
             X = torch.cat((X, torch.ones((X.shape[0], 1), dtype=X.dtype)), dim=1)
         for w in self.weights[:-1]:
@@ -202,3 +216,24 @@ class TorchActivations:
     @staticmethod
     def derivative(activation_name):
         return TorchActivations.derivatives.get(activation_name, None)
+
+class LossFuncs:
+    """
+    Proposed loss function by Chris Tofallis
+    """
+    @staticmethod
+    def TofallisLoss(a, y):
+        return torch.log(torch.mean(a[-1] / y))
+
+    """
+    Root Mean Square Error
+    """
+    @staticmethod
+    def RmseLoss(a, y):
+        return torch.sqrt(torch.mean((a[-1] - y)**2))
+
+    """
+    Mean Square Error
+    """
+    def MseLoss(a, y):
+        return torch.mean((a[-1] - y)**2)
