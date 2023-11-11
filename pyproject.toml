@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "PanelKalmanFilter"
+version = "1.0"
+authors = [{ name = "Adriel Ong", email = "adriel_datstat@zohomail.com" }, {name = "Azriel Cais Baluyut"}, {name = "Jowi Rapha Cruz"}]
+description = "Implementing standard econometric models using Stochastic Gradient Descent and Perceptrons instead of MLE and GMM."
+readme = "README.md"
+license = { file="LICENSE" }
+dependencies = [
+    "pandas", 
+    "plotly", 
+    "matplotlib",
+    "torch"
+]
+# More metadata can be added under the [project] table
