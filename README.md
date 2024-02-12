@@ -1,4 +1,4 @@
-# EconmetPerceptron
+# DeepLearningEconometrics
 Standard econometric models use Maximum Likelihood Estimation or situational equivalents (ie OLS) for calculations. `EconmetPerceptron` uses its own implementation of a Perceptron for estimates robust to distributional properties. Notably,
 - Linear Regression models are no longer fragile to heteroskedasticity or a non-zero error term, and is more robust to multicollinearity (but endogeneity remains a problem).
 - Logistic Regression models are more robust to multicollinearity.
