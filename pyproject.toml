@@ -3,8 +3,9 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "PanelKalmanFilter"
-version = "1.0"
+name = "DeepLearningEconometrics"
+version = "1.1.0"
+requires-python = ">=3.10"
 authors = [{ name = "Adriel Ong", email = "adriel_datstat@zohomail.com" }, {name = "Azriel Cais Baluyut"}, {name = "Jowi Rapha Cruz"}]
 description = "Implementing standard econometric models using Stochastic Gradient Descent and Perceptrons instead of MLE and GMM."
 readme = "README.md"
@@ -13,6 +14,13 @@ dependencies = [
     "pandas", 
     "plotly", 
     "matplotlib",
+    "numpy",
+    "scipy",
     "torch"
 ]
-# More metadata can be added under the [project] table
+
+[tool.setuptools]
+packages = ["DeepLearningEconometrics"]
+
+[tool.setuptools.package-dir]
+DeepLearningEconometrics = "."

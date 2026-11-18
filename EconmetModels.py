@@ -4,6 +4,9 @@
 
 import torch
 
+from .PerceptronMain import Optimizers, PerceptronMain, TorchActivations
+from .WorkhorseFunctions import WorkhorseFunctions
+
 # Single Layer Perceptron ARIMA
 class ArimaSlp(PerceptronMain):
     def __init__(self, p, d, q, optimizer_function = Optimizers.sgd_optimizer, weight_decay = 0.0, add_bias = True):
